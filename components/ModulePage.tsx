@@ -1,0 +1,3 @@
+import AppShell from "@/components/AppShell";
+import AuthGuard from "@/components/AuthGuard";
+export default function ModulePage({title,description}:Readonly<{title:string;description:string}>){return <AuthGuard><AppShell title={title}><div className="module-grid"><section className="module-card"><h2>{title}</h2><p>{description}</p></section><section className="module-card"><h2>Siguiente desarrollo</h2><p>Aquí agregaremos formularios, tablas, filtros y acciones conectadas a Supabase.</p></section></div></AppShell></AuthGuard>; }

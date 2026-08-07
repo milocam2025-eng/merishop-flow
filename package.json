@@ -1,23 +1,8 @@
 {
-  "name": "merishop-flow-cloud",
-  "version": "0.2.0",
+  "name": "merishop-flow-pro",
+  "version": "4.0.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "@supabase/ssr": "^0.7.0",
-    "@supabase/supabase-js": "^2.55.0",
-    "next": "^15.4.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
-  },
-  "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@types/react": "^19.0.0",
-    "typescript": "^5.8.0"
-  }
+  "scripts": {"dev": "next dev", "build": "next build", "start": "next start"},
+  "dependencies": {"@supabase/ssr": "^0.7.0", "@supabase/supabase-js": "^2.55.0", "next": "15.5.2", "react": "19.1.0", "react-dom": "19.1.0"},
+  "devDependencies": {"@types/node": "^22.0.0", "@types/react": "^19.0.0", "@types/react-dom": "^19.0.0", "typescript": "^5.8.0"}
 }

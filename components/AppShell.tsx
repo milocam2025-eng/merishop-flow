@@ -1,0 +1,6 @@
+"use client";
+import Link from "next/link";
+import { usePathname,useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+const navigation=[{href:"/dashboard",label:"Inicio"},{href:"/clientes",label:"Clientes"},{href:"/pedidos",label:"Pedidos"},{href:"/inventario",label:"Inventario"},{href:"/pagos",label:"Pagos"},{href:"/envios",label:"Envíos"}];
+export default function AppShell({title,children}:Readonly<{title:string;children:React.ReactNode}>){ const pathname=usePathname(); const router=useRouter(); async function logout(){await createClient().auth.signOut();router.push("/login");} return <main className="app-shell"><aside className="sidebar"><div className="brand">MeriShop Flow Pro</div><nav>{navigation.map(item=><Link key={item.href} href={item.href} className={pathname===item.href?"active":""}>{item.label}</Link>)}</nav></aside><section className="main-content"><header className="topbar"><div><h1>{title}</h1><p>Panel administrativo de MeriShop</p></div><button type="button" onClick={logout}>Cerrar sesión</button></header>{children}</section></main>; }

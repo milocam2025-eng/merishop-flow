@@ -1,0 +1,1 @@
+-- Las tablas ya fueron creadas en tu proyecto de Supabase.

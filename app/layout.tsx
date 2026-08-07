@@ -1,5 +1,4 @@
-import "./styles.css";
-export const metadata = { title: "MeriShop Flow", description: "Gestión para personal shoppers" };
-export default function RootLayout({children}:{children:React.ReactNode}) {
-  return <html lang="es"><body>{children}</body></html>;
-}
+import type { Metadata } from "next";
+import "./globals.css";
+export const metadata: Metadata = { title: "MeriShop Flow Pro", description: "Sistema administrativo para MeriShop" };
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="es"><body>{children}</body></html>; }
