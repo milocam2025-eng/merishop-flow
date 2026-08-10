@@ -6,55 +6,136 @@ import AuthGuard from "@/components/AuthGuard";
 import StatusBadge from "@/components/StatusBadge";
 import { createClient } from "@/lib/supabase/client";
 
+type Order = {
+  id: string;
+  client_id: string | null;
+  product: string;
+  total: number;
+  paid: number;
+  status: string;
+}
+
 type Client = { id: string; name: string };
-type Shipment = { id: string; client_id: string | null; carrier: string | null; tracking: string | null; status: string };
+type Shipment = {
+  id: string;
+  order_id: string | null;
+  client_id: string | null;
+  carrier: string | null;
+  tracking: string | null;
+  status: string;
+};
 
 export default function EnviosPage() {
   const [clients, setClients] = useState<Client[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [rows, setRows] = useState<Shipment[]>([]);
-  const [form, setForm] = useState({ client_id: "", carrier: "USPS", tracking: "", status: "Preparando" });
+  const [form, setForm] = useState({ order_id: "", client_id: "", carrier: "USPS", tracking: "", status: "Preparando" });
   const [message, setMessage] = useState("");
 
-  async function load() {
-    const s = createClient();
-    const [c, sh] = await Promise.all([
-      s.from("clients").select("id,name").order("name"),
-      s.from("shipments").select("*").order("created_at", { ascending: false })
+ async function load() {
+  const s = createClient();
+
+  const [clientsResult, ordersResult, shipmentsResult] =
+    await Promise.all([
+      s.from("clients")
+        .select("id,name")
+        .order("name"),
+
+      s.from("orders")
+        .select("id,client_id,product,total,paid,status")
+        .order("created_at", { ascending: false }),
+
+      s.from("shipments")
+        .select("*")
+        .order("created_at", { ascending: false }),
     ]);
-    setClients((c.data as Client[]) ?? []);
-    setRows((sh.data as Shipment[]) ?? []);
+
+  setClients((clientsResult.data as Client[]) ?? []);
+  setOrders((ordersResult.data as Order[]) ?? []);
+  setRows((shipmentsResult.data as Shipment[]) ?? []);
+}
+    
+   useEffect(() => { load(); }, []);
+
+ async function submit(e: FormEvent) {
+  e.preventDefault();
+
+  const s = createClient();
+
+  // Buscar el pedido seleccionado
+  const order = paidOrders.find(
+    o => o.id === form.order_id
+  );
+
+  if (!order) {
+    setMessage("Selecciona un pedido.");
+    return;
   }
 
-  useEffect(() => { load(); }, []);
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const s = createClient();
-    const { data: { user } } = await s.auth.getUser();
-    if (!user) return;
-
-    const { error } = await s.from("shipments").insert({
-      user_id: user.id,
-      client_id: form.client_id || null,
+  const { error } = await s
+    .from("shipments")
+    .insert({
+      order_id: order.id,
+      client_id: order.client_id,
       carrier: form.carrier,
-      tracking: form.tracking.trim() || null,
-      status: form.status
+      tracking: form.tracking,
+      status: form.status,
     });
-    if (error) { setMessage(error.message); return; }
-    setForm({ client_id: "", carrier: "USPS", tracking: "", status: "Preparando" });
-    setMessage("Envío guardado.");
-    load();
+
+  if (error) {
+    setMessage(error.message);
+    return;
   }
 
-  const name = (id: string | null) => clients.find(c => c.id === id)?.name || "-";
+  setMessage("Envío guardado.");
 
+  setForm({
+    order_id: "",
+    client_id: "",
+    carrier: "USPS",
+    tracking: "",
+    status: "Preparando",
+  });
+
+  load();
+}
+   
+  const name = (id: string | null) => clients.find(c => c.id === id)?.name || "-";
+const paidOrders = orders.filter((order) => {
+  return (
+    order.status === "Pagado" &&
+    Number(order.paid || 0) >= Number(order.total || 0)
+  );
+});
   return (
     <AuthGuard>
       <AppShell title="Envíos">
         <section className="panel">
           <h2>Nuevo envío</h2>
           <form className="form-grid" onSubmit={submit}>
-            <label>Cliente<select value={form.client_id} onChange={e => setForm({ ...form, client_id: e.target.value })}><option value="">Sin asignar</option>{clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+          <label>
+  Pedido pagado
+  <select
+    value={form.order_id}
+    onChange={(e) =>
+      setForm({
+        ...form,
+        order_id: e.target.value,
+      })
+    }
+  >
+    <option value="">
+      Seleccionar pedido pagado
+    </option>
+
+    {paidOrders.map((o) => (
+      <option key={o.id} value={o.id}>
+        {o.product} — Pagado $
+        {Number(o.total || 0).toFixed(2)}
+      </option>
+    ))}
+  </select>
+</label>
             <label>Paquetería<select value={form.carrier} onChange={e => setForm({ ...form, carrier: e.target.value })}><option>USPS</option><option>UPS</option><option>FedEx</option><option>DHL</option></select></label>
             <label>Rastreo<input value={form.tracking} onChange={e => setForm({ ...form, tracking: e.target.value })}/></label>
             <label>Estado<select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}><option>Preparando</option><option>Enviado</option><option>En tránsito</option><option>Entregado</option></select></label>

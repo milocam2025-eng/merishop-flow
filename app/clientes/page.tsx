@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import AuthGuard from "@/components/AuthGuard";
@@ -12,7 +12,18 @@ type ClientRow = {
   email: string | null;
   location: string | null;
   notes?: string | null;
+  customer_code?: string | null;
+  status?: string | null;
+  birthday?: string | null;
+  preferred_contact?: string | null;
+
+  total_purchases?: number | null;
+  total_paid?: number | null;
+  balance_due?: number | null;
+  last_purchase_at?: string | null;
+
   created_at: string;
+
 };
 
 export default function ClientesPage() {
@@ -100,18 +111,98 @@ export default function ClientesPage() {
           </div>
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Nombre</th><th>WhatsApp</th><th>Correo</th><th>Ubicación</th><th></th></tr></thead>
-              <tbody>
-                {filtered.map(row => (
-                  <tr key={row.id}>
-                    <td><strong>{row.name}</strong></td>
-                    <td>{row.phone || "-"}</td>
-                    <td>{row.email || "-"}</td>
-                    <td>{row.location || "-"}</td>
-                    <td><button className="danger" type="button" onClick={() => remove(row.id)}>Eliminar</button></td>
-                  </tr>
-                ))}
-              </tbody>
+              <thead>
+  <tr>
+    <th>Cliente</th>
+    <th>WhatsApp</th>
+    <th>Correo</th>
+    <th>Ubicación</th>
+    <th>Saldo</th>
+    <th>Estado</th>
+    <th></th>
+  </tr>
+</thead>          
+  
+<tbody>
+  {filtered.map((row) => (
+    <tr key={row.id}>
+      <td>
+  <Link href={`/clientes/${row.id}`}>
+
+    <strong
+      style={{
+        color: "#2478b8",
+        cursor: "pointer",
+        textDecoration: "underline",
+      }}
+    >
+      {row.name}
+    </strong>
+
+  </Link>
+
+  <div
+    style={{
+      fontSize: 12,
+      marginTop: 4,
+      opacity: 0.7,
+    }}
+  >
+    {row.customer_code || "Sin código"}
+  </div>
+</td>
+
+      <td>{row.phone || "-"}</td>
+
+      <td>{row.email || "-"}</td>
+
+      <td>{row.location || "-"}</td>
+
+      <td>
+        {Number(row.balance_due || 0).toLocaleString("es-MX", {
+          style: "currency",
+          currency: "MXN",
+        })}
+      </td>
+
+      <td>{row.status || "Activo"}</td>
+
+      <td>
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+          }}
+        >
+          <Link
+            href={`/clientes/${row.id}`}
+            style={{
+              display: "inline-block",
+              padding: "8px 12px",
+              borderRadius: 8,
+              background: "#2478b8",
+              color: "white",
+              textDecoration: "none",
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Ver / Editar
+          </Link>
+
+          <button
+            className="danger"
+            type="button"
+            onClick={() => remove(row.id)}
+          >
+            Eliminar
+          </button>
+        </div>
+      </td>
+    </tr>
+  ))}
+</tbody>
             </table>
           </div>
         </section>
