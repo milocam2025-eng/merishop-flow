@@ -565,8 +565,8 @@ export default function ProductoPage() {
 
   if (!form) {
     return (
-      <AuthGuard>
-        <AppShell>
+<AuthGuard>
+  <AppShell title="Editar producto">
           <section className="panel">
             <p>
               {message ||
@@ -633,15 +633,20 @@ export default function ProductoPage() {
         100
       : 0;
 
-  function updateField(
-    field: keyof Product,
-    value: string | number
-  ) {
-    setForm({
-      ...form,
+
+function updateField<K extends keyof Product>(
+  field: K,
+  value: Product[K]
+) {
+  setForm((current) => {
+    if (!current) return current;
+
+    return {
+      ...current,
       [field]: value,
-    });
-  }
+    };
+  });
+}
 
   async function save(
     event: FormEvent<HTMLFormElement>
@@ -653,7 +658,10 @@ export default function ProductoPage() {
     setMessage(
       "Guardando cambios..."
     );
-
+if (!form) {
+  setMessage("No se pudo cargar el producto.");
+  return;
+}
     const payload = {
       sku:
         form.sku || null,
@@ -766,10 +774,9 @@ export default function ProductoPage() {
   const totalPhotos =
     images.length +
     (form.image_url ? 1 : 0);
-
-  return (
-    <AuthGuard>
-      <AppShell>
+return (
+  <AuthGuard>
+    <AppShell title="Editar producto">
         <section className="panel">
           <button
             type="button"

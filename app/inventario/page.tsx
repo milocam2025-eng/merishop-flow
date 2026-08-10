@@ -341,8 +341,8 @@ export default function InventarioPage() {
     potentialSales - inventoryValue;
 
   return (
-    <AuthGuard>
-      <AppShell>
+<AuthGuard>
+  <AppShell title="Inventario">
         <section className="panel">
           <div className="section-title">
             <div>

@@ -92,18 +92,17 @@ const ultimaCompra =
 
   if (loading) {
     return (
-      <AuthGuard>
-        <AppShell>
-          <p>Cargando cliente...</p>
-        </AppShell>
-      </AuthGuard>
-    );
+<AuthGuard>
+  <AppShell title="Cliente">
+    <p>Cargando cliente...</p>
+  </AppShell>
+</AuthGuard>    );
   }
 
   if (!client) {
     return (
       <AuthGuard>
-        <AppShell>
+        <AppShell title="Detalle del cliente">
           <p>Cliente no encontrado.</p>
         </AppShell>
       </AuthGuard>
@@ -112,7 +111,7 @@ const ultimaCompra =
 
   return (
     <AuthGuard>
-      <AppShell>
+     <AppShell title="Detalle del cliente">
 
         <button
           className="secondary"
