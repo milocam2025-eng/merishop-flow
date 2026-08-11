@@ -95,11 +95,15 @@ function moneyUSD(value?: number | null) {
 }
 
 export default function InventarioPage() {
-  const [rows, setRows] = useState<InventoryRow[]>([]);
-  const [query, setQuery] = useState("");
-  const [form, setForm] = useState(initialForm);
-  const [message, setMessage] = useState("");
-  const [saving, setSaving] = useState(false);
+const [rows, setRows] = useState<InventoryRow[]>([]);
+const [query, setQuery] = useState("");
+const [form, setForm] = useState(initialForm);
+const [message, setMessage] = useState("");
+const [saving, setSaving] = useState(false);
+
+const [selectedImages, setSelectedImages] = useState<File[]>([]);
+const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+const [primaryImageIndex, setPrimaryImageIndex] = useState(0);
 
   async function load() {
     const supabase = createClient();
@@ -277,16 +281,90 @@ export default function InventarioPage() {
       notes: form.notes.trim() || null,
     };
 
-    const { error } = await supabase
-      .from("inventory")
-      .insert(payload);
+    const result = await supabase
+  .from("inventory")
+  .insert(payload)
+  .select("id")
+  .single();
 
-    setSaving(false);
+const insertedRow = result.data as { id: string } | null;
 
-    if (error) {
-      setMessage(error.message);
+const insertError = result.error as
+  | { message: string }
+  | null;
+
+if (insertError) {
+  setSaving(false);
+  setMessage(insertError.message);
+  return;
+}
+
+if (!insertedRow) {
+  setSaving(false);
+  setMessage("No se pudo obtener el ID del producto.");
+  return;
+}
+
+const inventoryId = insertedRow.id;
+if (selectedImages.length > 0) {
+  const imageRecords = [];
+
+  for (let index = 0; index < selectedImages.length; index++) {
+    const file = selectedImages[index];
+
+    const extension = file.name.split(".").pop() || "jpg";
+
+    const storagePath =
+      `${user.id}/${inventoryId}/${Date.now()}-${index}.${extension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("product-images")
+      .upload(storagePath, file);
+
+    if (uploadError) {
+      setSaving(false);
+      setMessage(
+        `El producto se guardó, pero falló una imagen: ${uploadError.message}`
+      );
       return;
     }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("product-images")
+      .getPublicUrl(storagePath);
+
+    imageRecords.push({
+      inventory_id: inventoryId,
+      user_id: user.id,
+      image_url: publicUrlData.publicUrl,
+      storage_path: storagePath,
+      sort_order: index,
+      is_primary: index === primaryImageIndex,
+    });
+  }
+
+  const { error: imageInsertError } = await supabase
+    .from("inventory_images")
+    .insert(imageRecords);
+
+  if (imageInsertError) {
+    setSaving(false);
+    setMessage(
+      `Producto guardado, pero no se pudieron registrar las fotos: ${imageInsertError.message}`
+    );
+    return;
+  }
+}
+
+setSaving(false);
+setMessage("Artículo guardado correctamente.");
+setForm(initialForm);
+
+setSelectedImages([]);
+setImagePreviews([]);
+setPrimaryImageIndex(0);
+
+await load();
 
     setForm(initialForm);
     setMessage(
@@ -771,7 +849,82 @@ export default function InventarioPage() {
                 </div>
               </div>
             </div>
+<h2 style={{ marginTop: 30 }}>Fotografías</h2>
 
+<label style={{ display: "block", marginBottom: 20 }}>
+  Seleccionar fotografías
+
+  <input
+    type="file"
+    accept="image/*"
+    multiple
+    onChange={(e) => {
+      const files = Array.from(e.target.files ?? []);
+
+      setSelectedImages(files);
+
+      setImagePreviews(
+        files.map((file) =>
+          URL.createObjectURL(file)
+        )
+      );
+
+      setPrimaryImageIndex(0);
+    }}
+  />
+</label>
+
+{imagePreviews.length > 0 && (
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns:
+        "repeat(auto-fill,minmax(140px,1fr))",
+      gap: 16,
+      marginBottom: 20,
+    }}
+  >
+    {imagePreviews.map((src, index) => (
+      <div
+        key={index}
+        style={{
+          border:
+            index === primaryImageIndex
+              ? "3px solid #2563eb"
+              : "1px solid #ddd",
+          borderRadius: 10,
+          padding: 8,
+        }}
+      >
+        <img
+          src={src}
+          alt=""
+          style={{
+            width: "100%",
+            height: 140,
+            objectFit: "cover",
+            borderRadius: 8,
+          }}
+        />
+
+        <button
+          type="button"
+          style={{
+            width: "100%",
+            marginTop: 10,
+          }}
+          onClick={() =>
+            setPrimaryImageIndex(index)
+          }
+        >
+          {index === primaryImageIndex
+            ? "✓ Foto principal"
+            : "Elegir principal"}
+        </button>
+      </div>
+    ))}
+  </div>
+)}
             <label
               style={{
                 display: "block",
