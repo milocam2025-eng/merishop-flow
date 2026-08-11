@@ -309,17 +309,23 @@ const inventoryId = insertedRow.id;
 if (selectedImages.length > 0) {
   const imageRecords = [];
 
-  for (let index = 0; index < selectedImages.length; index++) {
+  for (
+    let index = 0;
+    index < selectedImages.length;
+    index++
+  ) {
     const file = selectedImages[index];
 
-    const extension = file.name.split(".").pop() || "jpg";
+    const extension =
+      file.name.split(".").pop()?.toLowerCase() || "jpg";
 
     const storagePath =
       `${user.id}/${inventoryId}/${Date.now()}-${index}.${extension}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from("product-images")
-      .upload(storagePath, file);
+    const { error: uploadError } =
+      await supabase.storage
+        .from("product-images")
+        .upload(storagePath, file);
 
     if (uploadError) {
       setSaving(false);
@@ -329,9 +335,10 @@ if (selectedImages.length > 0) {
       return;
     }
 
-    const { data: publicUrlData } = supabase.storage
-      .from("product-images")
-      .getPublicUrl(storagePath);
+    const { data: publicUrlData } =
+      supabase.storage
+        .from("product-images")
+        .getPublicUrl(storagePath);
 
     imageRecords.push({
       inventory_id: inventoryId,
@@ -343,37 +350,60 @@ if (selectedImages.length > 0) {
     });
   }
 
-  const { error: imageInsertError } = await supabase
-    .from("inventory_images")
-    .insert(imageRecords);
+  // Guardar todas las fotografías en inventory_images
+  const { error: imageInsertError } =
+    await supabase
+      .from("inventory_images")
+      .insert(imageRecords);
 
   if (imageInsertError) {
     setSaving(false);
     setMessage(
-      `Producto guardado, pero no se pudieron registrar las fotos: ${imageInsertError.message}`
+      `El producto se guardó, pero no se pudieron registrar las fotos: ${imageInsertError.message}`
     );
     return;
   }
+
+  // Buscar cuál fue seleccionada como fotografía principal
+  const primaryImage = imageRecords.find(
+    (image) => image.is_primary
+  );
+
+  // Guardar también la principal en inventory.image_url
+  // para que aparezca en la tabla del inventario
+  if (primaryImage) {
+    const { error: mainImageError } =
+      await supabase
+        .from("inventory")
+        .update({
+          image_url: primaryImage.image_url,
+        })
+        .eq("id", inventoryId);
+
+    if (mainImageError) {
+      setSaving(false);
+      setMessage(
+        `Las fotos se guardaron, pero no se pudo establecer la foto principal: ${mainImageError.message}`
+      );
+      return;
+    }
+  }
 }
 
-setSaving(false);
-setMessage("Artículo guardado correctamente.");
+// Limpiar formulario después de guardar
 setForm(initialForm);
-
 setSelectedImages([]);
 setImagePreviews([]);
 setPrimaryImageIndex(0);
 
+setSaving(false);
+
+setMessage(
+  "Artículo agregado correctamente al inventario."
+);
+
 await load();
-
-    setForm(initialForm);
-    setMessage(
-      "Artículo agregado correctamente al inventario."
-    );
-
-    await load();
-  }
-
+}
   async function remove(id: string) {
     if (!confirm("¿Eliminar este artículo del inventario?")) {
       return;
