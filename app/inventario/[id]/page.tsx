@@ -59,18 +59,17 @@ type Product = {
 
 type ProductImage = {
   id: string;
-  product_id: string;
+  inventory_id: string;
   user_id: string;
 
   image_url: string;
-  storage_path: string;
+  storage_path: string | null;
 
   is_primary: boolean;
   sort_order: number;
 
   created_at: string;
 };
-
 export default function ProductoPage() {
   const params = useParams();
   const router = useRouter();
@@ -120,30 +119,29 @@ export default function ProductoPage() {
   }
 
   async function loadImages() {
-    const { data, error } =
-      await createClient()
-        .from("product_images")
-        .select("*")
-        .eq("product_id", id)
-        .order("is_primary", {
-          ascending: false,
-        })
-        .order("sort_order", {
-          ascending: true,
-        })
-        .order("created_at", {
-          ascending: true,
-        });
+  const supabase = createClient();
 
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
+  const { data, error } = await supabase
+    .from("inventory_images")
+    .select("*")
+    .eq("inventory_id", id)
+    .order("is_primary", {
+      ascending: false,
+    })
+    .order("sort_order", {
+      ascending: true,
+    })
+    .order("created_at", {
+      ascending: true,
+    });
 
-    setImages(
-      (data as ProductImage[]) ?? []
-    );
+  if (error) {
+    setMessage(error.message);
+    return;
   }
+
+  setImages((data as ProductImage[]) ?? []);
+}
 
   async function loadAll() {
     await Promise.all([
@@ -163,110 +161,118 @@ export default function ProductoPage() {
   */
 
   async function uploadMainImage() {
-    if (!imageFile) {
-      setMessage(
-        "Selecciona una fotografía primero."
-      );
-      return;
-    }
-
-    if (!imageFile.type.startsWith("image/")) {
-      setMessage(
-        "El archivo seleccionado no es una imagen."
-      );
-      return;
-    }
-
-    if (imageFile.size > 5 * 1024 * 1024) {
-      setMessage(
-        "La fotografía no puede superar 5 MB."
-      );
-      return;
-    }
-
-    setUploading(true);
-
-    setMessage(
-      "Subiendo fotografía principal..."
-    );
-
-    const supabase = createClient();
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      setUploading(false);
-
-      setMessage(
-        "No se encontró una sesión activa."
-      );
-
-      return;
-    }
-
-    const extension =
-      imageFile.name
-        .split(".")
-        .pop()
-        ?.toLowerCase() || "jpg";
-
-    const filePath =
-      `${user.id}/${id}/principal-` +
-      `${Date.now()}.${extension}`;
-
-    const { error: uploadError } =
-      await supabase.storage
-        .from("product-images")
-        .upload(
-          filePath,
-          imageFile,
-          {
-            cacheControl: "3600",
-            upsert: false,
-          }
-        );
-
-    if (uploadError) {
-      setUploading(false);
-      setMessage(uploadError.message);
-      return;
-    }
-
-    const { data: publicData } =
-      supabase.storage
-        .from("product-images")
-        .getPublicUrl(filePath);
-
-    const imageUrl =
-      publicData.publicUrl;
-
-    const { error: updateError } =
-      await supabase
-        .from("inventory")
-        .update({
-          image_url: imageUrl,
-        })
-        .eq("id", id);
-
-    if (updateError) {
-      setUploading(false);
-      setMessage(updateError.message);
-      return;
-    }
-
-    setImageFile(null);
-
-    setUploading(false);
-
-    setMessage(
-      "Fotografía principal guardada correctamente."
-    );
-
-    await loadProduct();
+  if (!imageFile) {
+    setMessage("Selecciona una fotografía primero.");
+    return;
   }
+
+  if (!imageFile.type.startsWith("image/")) {
+    setMessage("El archivo seleccionado no es una imagen.");
+    return;
+  }
+
+  if (imageFile.size > 5 * 1024 * 1024) {
+    setMessage("La fotografía no puede superar 5 MB.");
+    return;
+  }
+
+  setUploading(true);
+  setMessage("Subiendo fotografía principal...");
+
+  const supabase = createClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    setUploading(false);
+    setMessage("No se encontró una sesión activa.");
+    return;
+  }
+
+  const extension =
+    imageFile.name.split(".").pop()?.toLowerCase() || "jpg";
+
+  const filePath =
+    `${user.id}/${id}/principal-${Date.now()}.${extension}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("product-images")
+    .upload(filePath, imageFile, {
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    setUploading(false);
+    setMessage(uploadError.message);
+    return;
+  }
+
+  const { data: publicData } = supabase.storage
+    .from("product-images")
+    .getPublicUrl(filePath);
+
+  const imageUrl = publicData.publicUrl;
+
+  // Quitar marca de principal a las fotos anteriores
+  const { error: resetPrimaryError } = await supabase
+    .from("inventory_images")
+    .update({
+      is_primary: false,
+    })
+    .eq("inventory_id", id);
+
+  if (resetPrimaryError) {
+    setUploading(false);
+    setMessage(resetPrimaryError.message);
+    return;
+  }
+
+  // Registrar la nueva foto como principal
+  const { error: imageInsertError } = await supabase
+    .from("inventory_images")
+    .insert({
+      inventory_id: id,
+      user_id: user.id,
+      image_url: imageUrl,
+      storage_path: filePath,
+      is_primary: true,
+      sort_order: 0,
+    });
+
+  if (imageInsertError) {
+    setUploading(false);
+    setMessage(imageInsertError.message);
+    return;
+  }
+
+  // Mantener image_url para que la tabla del inventario
+  // siga mostrando la miniatura principal
+  const { error: updateError } = await supabase
+    .from("inventory")
+    .update({
+      image_url: imageUrl,
+    })
+    .eq("id", id);
+
+  if (updateError) {
+    setUploading(false);
+    setMessage(updateError.message);
+    return;
+  }
+
+  setImageFile(null);
+  setUploading(false);
+
+  setMessage(
+    "Fotografía principal guardada correctamente."
+  );
+
+  await loadAll();
+}
 
   /*
   ==========================================
@@ -375,18 +381,18 @@ export default function ProductoPage() {
       publicData.publicUrl;
 
     const { error: insertError } =
-      await supabase
-        .from("product_images")
-        .insert({
-          product_id: id,
-          user_id: user.id,
+  await supabase
+    .from("inventory_images")
+    .insert({
+      inventory_id: id,
+      user_id: user.id,
 
-          image_url: imageUrl,
-          storage_path: filePath,
+      image_url: imageUrl,
+      storage_path: filePath,
 
-          is_primary: false,
-          sort_order: images.length + 1,
-        });
+      is_primary: false,
+      sort_order: images.length + 1,
+    });
 
     if (insertError) {
       /*
@@ -453,18 +459,19 @@ export default function ProductoPage() {
     */
 
     await supabase
-      .from("product_images")
-      .update({
-        is_primary: false,
-      })
-      .eq("product_id", id);
+      .from("inventory_images")
+.update({
+  is_primary: false,
+})
+.eq("inventory_id", id);
 
     await supabase
-      .from("product_images")
-      .update({
-        is_primary: true,
-      })
-      .eq("id", image.id);
+  .from("inventory_images")
+  .update({
+    is_primary: true,
+  })
+  .eq("id", image.id);
+
 
     setMessage(
       "Fotografía principal actualizada."
@@ -494,26 +501,23 @@ export default function ProductoPage() {
       "Eliminando fotografía..."
     );
 
-    const { error: storageError } =
-      await supabase.storage
-        .from("product-images")
-        .remove([
-          image.storage_path,
-        ]);
+if (image.storage_path) {
+  const { error: storageError } =
+    await supabase.storage
+      .from("product-images")
+      .remove([image.storage_path]);
 
-    if (storageError) {
-      setMessage(
-        storageError.message
-      );
-
-      return;
-    }
+  if (storageError) {
+    setMessage(storageError.message);
+    return;
+  }
+}
 
     const { error: deleteError } =
       await supabase
-        .from("product_images")
-        .delete()
-        .eq("id", image.id);
+        .from("inventory_images")
+.delete()
+.eq("id", image.id);
 
     if (deleteError) {
       setMessage(
