@@ -102,6 +102,9 @@ export default function ProductoPage() {
   const [uploadingGallery, setUploadingGallery] =
     useState(false);
 
+const [activeImage, setActiveImage] =
+  useState<string | null>(null);
+
   async function loadProduct() {
     const { data, error } =
       await createClient()
@@ -154,6 +157,30 @@ export default function ProductoPage() {
     loadAll();
   }, [id]);
 
+useEffect(() => {
+  if (images.length > 0) {
+    const primaryImage =
+      images.find((image) => image.is_primary) ||
+      images[0];
+
+    setActiveImage((current) => {
+      const exists = images.some(
+        (image) =>
+          image.image_url === current
+      );
+
+      return exists
+        ? current
+        : primaryImage.image_url;
+    });
+
+    return;
+  }
+
+  if (form?.image_url) {
+    setActiveImage(form.image_url);
+  }
+}, [images, form?.image_url]);
   /*
   ==========================================
   FOTO PRINCIPAL
@@ -779,6 +806,8 @@ if (!form) {
     images.length +
     (form.image_url ? 1 : 0);
 return (
+
+
   <AuthGuard>
     <AppShell title="Editar producto">
         <section className="panel">
@@ -806,6 +835,63 @@ return (
               {form.sku || "-"}
             </strong>
           </p>
+
+{activeImage && (
+  <div
+    style={{
+      display: "flex",
+      gap: 20,
+      marginTop: 25,
+      marginBottom: 30,
+      alignItems: "flex-start",
+    }}
+  >
+    {/* Miniaturas */}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+      }}
+    >
+      {images.map((image) => (
+        <img
+          key={image.id}
+          src={image.image_url}
+          alt=""
+          onClick={() =>
+            setActiveImage(image.image_url)
+          }
+          style={{
+            width: 80,
+            height: 80,
+            objectFit: "cover",
+            cursor: "pointer",
+            border:
+              activeImage === image.image_url
+                ? "3px solid #2563eb"
+                : "1px solid #d1d5db",
+            borderRadius: 8,
+          }}
+        />
+      ))}
+    </div>
+
+    {/* Imagen grande */}
+    <div>
+      <img
+        src={activeImage}
+        alt={form.product}
+        style={{
+          width: 500,
+          maxWidth: "100%",
+          borderRadius: 12,
+          border: "1px solid #ddd",
+        }}
+      />
+    </div>
+  </div>
+)}
 
           {/* =========================
               FOTOGRAFÍA PRINCIPAL

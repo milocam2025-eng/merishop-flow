@@ -1071,39 +1071,60 @@ await load();
                       row.minimum_stock ?? 1
                     );
 return (
-  <tr key={row.id}><td>
-  {row.image_url ? (
-    <img
-      src={row.image_url}
-      alt={row.product}
+<tr key={row.id}>
+  <td>
+    <Link href={`/inventario/${row.id}`}>
+      {row.image_url ? (
+        <img
+          src={row.image_url}
+          alt={row.product}
+          style={{
+            width: 70,
+            height: 70,
+            objectFit: "cover",
+            borderRadius: 10,
+            border: "1px solid #dde5ef",
+            background: "#ffffff",
+            display: "block",
+            cursor: "pointer",
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: 70,
+            height: 70,
+            borderRadius: 10,
+            border: "1px solid #dde5ef",
+            background: "#f5f7fa",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 24,
+            cursor: "pointer",
+          }}
+        >
+          📦
+        </div>
+      )}
+    </Link>
+  </td>
+
+  <td>{row.sku || "-"}</td>
+
+  <td>
+    <Link
+      href={`/inventario/${row.id}`}
       style={{
-        width: 70,
-        height: 70,
-        objectFit: "cover",
-        borderRadius: 10,
-        border: "1px solid #dde5ef",
-        background: "#ffffff",
-        display: "block",
-      }}
-    />
-  ) : (
-    <div
-      style={{
-        width: 70,
-        height: 70,
-        borderRadius: 10,
-        border: "1px solid #dde5ef",
-        background: "#f5f7fa",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 24,
+        color: "inherit",
+        textDecoration: "none",
+        fontWeight: 600,
       }}
     >
-      📦
-    </div>
-  )}
-</td><td>{row.sku || "-"}</td><td>{row.product}</td><td>{row.brand || "-"}</td><td>{row.category || "-"}</td><td>{row.size || "-"}</td><td>{row.color || "-"}</td><td>{row.quantity}</td><td>{moneyUSD(row.cost_usd)}</td><td>{money(row.total_cost_mxn)}</td><td>{money(row.sale_price_mxn)}</td><td>
+      {row.product}
+    </Link>
+  </td>
+<td>{row.brand || "-"}</td><td>{row.category || "-"}</td><td>{row.size || "-"}</td><td>{row.color || "-"}</td><td>{row.quantity}</td><td>{moneyUSD(row.cost_usd)}</td><td>{money(row.total_cost_mxn)}</td><td>{money(row.sale_price_mxn)}</td><td>
     {money(row.profit_mxn)}
     <div style={{ fontSize: 12 }}>
       {Number(row.profit_percent || 0).toFixed(1)}%
