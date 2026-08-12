@@ -107,7 +107,14 @@ export default function ProductoPage() {
 
   const [imageModalOpen, setImageModalOpen] =
     useState(false);
+const [zoomActive, setZoomActive] =
+  useState(false);
 
+const [zoomPosition, setZoomPosition] =
+  useState({
+    x: 50,
+    y: 50,
+  });
   async function loadProduct() {
     const { data, error } =
       await createClient()
@@ -937,24 +944,74 @@ if (!form) {
       ))}
     </div>
 
-    {/* Imagen grande */}
+    {/* Imagen grande con zoom */}
     <div>
-      <img
-        src={activeImage}
-        alt={form.product}
-        onClick={() =>
-          setImageModalOpen(true)
-        }
+      <div
         style={{
+          position: "relative",
           width: 500,
           maxWidth: "100%",
-          maxHeight: 650,
-          objectFit: "contain",
-          borderRadius: 12,
-          border: "1px solid #ddd",
-          cursor: "zoom-in",
         }}
-      />
+        onMouseEnter={() =>
+          setZoomActive(true)
+        }
+        onMouseLeave={() =>
+          setZoomActive(false)
+        }
+        onMouseMove={(event) => {
+          const rect =
+            event.currentTarget.getBoundingClientRect();
+
+          const x =
+            ((event.clientX - rect.left) /
+              rect.width) *
+            100;
+
+          const y =
+            ((event.clientY - rect.top) /
+              rect.height) *
+            100;
+
+          setZoomPosition({
+            x,
+            y,
+          });
+        }}
+      >
+        <img
+          src={activeImage}
+          alt={form.product}
+          onClick={() =>
+            setImageModalOpen(true)
+          }
+          style={{
+            width: "100%",
+            maxHeight: 650,
+            objectFit: "contain",
+            borderRadius: 12,
+            border: "1px solid #ddd",
+            cursor: "zoom-in",
+            display: "block",
+          }}
+        />
+
+        {zoomActive && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: 12,
+              backgroundImage: `url(${activeImage})`,
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "220%",
+              backgroundPosition:
+                `${zoomPosition.x}% ${zoomPosition.y}%`,
+              pointerEvents: "none",
+              border: "1px solid #d1d5db",
+            }}
+          />
+        )}
+      </div>
     </div>
   </div>
 )}
@@ -968,7 +1025,8 @@ if (!form) {
     style={{
       position: "fixed",
       inset: 0,
-      background: "rgba(0, 0, 0, 0.88)",
+      background:
+        "rgba(0, 0, 0, 0.88)",
       zIndex: 9999,
       display: "flex",
       alignItems: "center",
@@ -979,26 +1037,48 @@ if (!form) {
     {/* Cerrar */}
     <button
       type="button"
-      aria-label="Cerrar visor"
+      aria-label="Cerrar"
       onClick={(event) => {
         event.stopPropagation();
         setImageModalOpen(false);
       }}
       style={{
         position: "absolute",
-        top: 20,
-        right: 24,
-        width: 46,
-        height: 46,
+        top: 25,
+        right: 25,
+        width: 60,
+        height: 60,
         borderRadius: "50%",
         border: "none",
         background: "#ffffff",
-        fontSize: 28,
         cursor: "pointer",
-        zIndex: 10002,
+        boxShadow:
+          "0 6px 20px rgba(0,0,0,.35)",
+        zIndex: 10003,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
       }}
     >
-      ×
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+      >
+        <path
+          d="M18 6L6 18"
+          stroke="#111827"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M6 6L18 18"
+          stroke="#111827"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+      </svg>
     </button>
 
     {/* Anterior */}
@@ -1012,20 +1092,38 @@ if (!form) {
         }}
         style={{
           position: "absolute",
-          left: 20,
+          left: 40,
           top: "50%",
-          transform: "translateY(-50%)",
-          width: 52,
-          height: 52,
+          transform:
+            "translateY(-50%)",
+          width: 60,
+          height: 60,
           borderRadius: "50%",
           border: "none",
           background: "#ffffff",
-          fontSize: 30,
           cursor: "pointer",
+          boxShadow:
+            "0 6px 20px rgba(0,0,0,.35)",
           zIndex: 10002,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
         }}
       >
-        ‹
+        <svg
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <path
+            d="M15 18L9 12L15 6"
+            stroke="#111827"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </button>
     )}
 
@@ -1062,8 +1160,11 @@ if (!form) {
           fontWeight: 700,
         }}
       >
-        {Math.max(activeImageIndex, 0) + 1} de{" "}
-        {displayImages.length}
+        {Math.max(
+          activeImageIndex,
+          0
+        ) + 1}{" "}
+        de {displayImages.length}
       </div>
     </div>
 
@@ -1078,20 +1179,38 @@ if (!form) {
         }}
         style={{
           position: "absolute",
-          right: 20,
+          right: 40,
           top: "50%",
-          transform: "translateY(-50%)",
-          width: 52,
-          height: 52,
+          transform:
+            "translateY(-50%)",
+          width: 60,
+          height: 60,
           borderRadius: "50%",
           border: "none",
           background: "#ffffff",
-          fontSize: 30,
           cursor: "pointer",
+          boxShadow:
+            "0 6px 20px rgba(0,0,0,.35)",
           zIndex: 10002,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
         }}
       >
-        ›
+        <svg
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <path
+            d="M9 18L15 12L9 6"
+            stroke="#111827"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </button>
     )}
   </div>
