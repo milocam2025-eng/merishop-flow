@@ -102,8 +102,11 @@ export default function ProductoPage() {
   const [uploadingGallery, setUploadingGallery] =
     useState(false);
 
-const [activeImage, setActiveImage] =
-  useState<string | null>(null);
+  const [activeImage, setActiveImage] =
+    useState<string | null>(null);
+
+  const [imageModalOpen, setImageModalOpen] =
+    useState(false);
 
   async function loadProduct() {
     const { data, error } =
@@ -157,7 +160,7 @@ const [activeImage, setActiveImage] =
     loadAll();
   }, [id]);
 
-useEffect(() => {
+  useEffect(() => {
   if (images.length > 0) {
     const primaryImage =
       images.find((image) => image.is_primary) ||
@@ -802,10 +805,67 @@ if (!form) {
     await loadProduct();
   }
 
-  const totalPhotos =
-    images.length +
-    (form.image_url ? 1 : 0);
-return (
+  const displayImages: ProductImage[] = [...images];
+
+  if (
+    form.image_url &&
+    !displayImages.some(
+      (image) => image.image_url === form.image_url
+    )
+  ) {
+    displayImages.unshift({
+      id: "legacy-main-image",
+      inventory_id: id,
+      user_id: "",
+      image_url: form.image_url,
+      storage_path: null,
+      is_primary: true,
+      sort_order: -1,
+      created_at: "",
+    });
+  }
+
+  const totalPhotos = displayImages.length;
+
+  const activeImageIndex = activeImage
+    ? displayImages.findIndex(
+        (image) => image.image_url === activeImage
+      )
+    : -1;
+
+  function showPreviousImage() {
+    if (displayImages.length === 0) return;
+
+    const currentIndex =
+      activeImageIndex >= 0 ? activeImageIndex : 0;
+
+    const previousIndex =
+      currentIndex === 0
+        ? displayImages.length - 1
+        : currentIndex - 1;
+
+    setActiveImage(
+      displayImages[previousIndex].image_url
+    );
+  }
+
+  function showNextImage() {
+    if (displayImages.length === 0) return;
+
+    const currentIndex =
+      activeImageIndex >= 0 ? activeImageIndex : 0;
+
+    const nextIndex =
+      currentIndex === displayImages.length - 1
+        ? 0
+        : currentIndex + 1;
+
+    setActiveImage(
+      displayImages[nextIndex].image_url
+    );
+  }
+
+  return (
 
 
   <AuthGuard>
@@ -854,11 +914,11 @@ return (
         gap: 10,
       }}
     >
-      {images.map((image) => (
+      {displayImages.map((image) => (
         <img
           key={image.id}
           src={image.image_url}
-          alt=""
+          alt={form.product}
           onClick={() =>
             setActiveImage(image.image_url)
           }
@@ -882,17 +942,160 @@ return (
       <img
         src={activeImage}
         alt={form.product}
+        onClick={() =>
+          setImageModalOpen(true)
+        }
         style={{
           width: 500,
           maxWidth: "100%",
+          maxHeight: 650,
+          objectFit: "contain",
           borderRadius: 12,
           border: "1px solid #ddd",
+          cursor: "zoom-in",
         }}
       />
     </div>
   </div>
 )}
 
+{/* VISOR DE PANTALLA COMPLETA */}
+{imageModalOpen && activeImage && (
+  <div
+    onClick={() =>
+      setImageModalOpen(false)
+    }
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0, 0, 0, 0.88)",
+      zIndex: 9999,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 24,
+    }}
+  >
+    {/* Cerrar */}
+    <button
+      type="button"
+      aria-label="Cerrar visor"
+      onClick={(event) => {
+        event.stopPropagation();
+        setImageModalOpen(false);
+      }}
+      style={{
+        position: "absolute",
+        top: 20,
+        right: 24,
+        width: 46,
+        height: 46,
+        borderRadius: "50%",
+        border: "none",
+        background: "#ffffff",
+        fontSize: 28,
+        cursor: "pointer",
+        zIndex: 10002,
+      }}
+    >
+      ×
+    </button>
+
+    {/* Anterior */}
+    {displayImages.length > 1 && (
+      <button
+        type="button"
+        aria-label="Fotografía anterior"
+        onClick={(event) => {
+          event.stopPropagation();
+          showPreviousImage();
+        }}
+        style={{
+          position: "absolute",
+          left: 20,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: 52,
+          height: 52,
+          borderRadius: "50%",
+          border: "none",
+          background: "#ffffff",
+          fontSize: 30,
+          cursor: "pointer",
+          zIndex: 10002,
+        }}
+      >
+        ‹
+      </button>
+    )}
+
+    {/* Foto grande */}
+    <div
+      onClick={(event) =>
+        event.stopPropagation()
+      }
+      style={{
+        maxWidth: "92vw",
+        maxHeight: "92vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 12,
+      }}
+    >
+      <img
+        src={activeImage}
+        alt={form.product}
+        style={{
+          maxWidth: "92vw",
+          maxHeight: "84vh",
+          objectFit: "contain",
+          borderRadius: 12,
+          background: "#ffffff",
+        }}
+      />
+
+      <div
+        style={{
+          color: "#ffffff",
+          fontSize: 14,
+          fontWeight: 700,
+        }}
+      >
+        {Math.max(activeImageIndex, 0) + 1} de{" "}
+        {displayImages.length}
+      </div>
+    </div>
+
+    {/* Siguiente */}
+    {displayImages.length > 1 && (
+      <button
+        type="button"
+        aria-label="Fotografía siguiente"
+        onClick={(event) => {
+          event.stopPropagation();
+          showNextImage();
+        }}
+        style={{
+          position: "absolute",
+          right: 20,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: 52,
+          height: 52,
+          borderRadius: "50%",
+          border: "none",
+          background: "#ffffff",
+          fontSize: 30,
+          cursor: "pointer",
+          zIndex: 10002,
+        }}
+      >
+        ›
+      </button>
+    )}
+  </div>
+)}
           {/* =========================
               FOTOGRAFÍA PRINCIPAL
           ========================= */}
