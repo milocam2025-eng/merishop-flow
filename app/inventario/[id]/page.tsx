@@ -598,6 +598,72 @@ if (image.storage_path) {
     await loadAll();
   }
 
+// AQUÍ PEGA EL PASO 1
+
+async function moveImage(
+  image: ProductImage,
+  direction: "up" | "down"
+) {
+  const currentIndex = images.findIndex(
+    (item) => item.id === image.id
+  );
+
+  if (currentIndex === -1) return;
+
+  const targetIndex =
+    direction === "up"
+      ? currentIndex - 1
+      : currentIndex + 1;
+
+  if (
+    targetIndex < 0 ||
+    targetIndex >= images.length
+  ) {
+    return;
+  }
+
+  const targetImage = images[targetIndex];
+
+  const supabase = createClient();
+
+  setMessage("Actualizando orden...");
+
+  const currentOrder =
+    image.sort_order ?? currentIndex;
+
+  const targetOrder =
+    targetImage.sort_order ?? targetIndex;
+
+  const { error: firstError } =
+    await supabase
+      .from("inventory_images")
+      .update({
+        sort_order: targetOrder,
+      })
+      .eq("id", image.id);
+
+  if (firstError) {
+    setMessage(firstError.message);
+    return;
+  }
+
+  const { error: secondError } =
+    await supabase
+      .from("inventory_images")
+      .update({
+        sort_order: currentOrder,
+      })
+      .eq("id", targetImage.id);
+
+  if (secondError) {
+    setMessage(secondError.message);
+    return;
+  }
+
+  setMessage("Orden actualizado.");
+
+  await loadImages();
+}
   /*
   ==========================================
   FORMULARIO PRODUCTO
@@ -1347,118 +1413,127 @@ if (!form) {
                 Galería
               </h3>
 
-              {images.length ===
-              0 ? (
-                <p>
-                  Todavía no hay fotografías adicionales.
-                </p>
-              ) : (
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                      "repeat(auto-fill, minmax(180px, 1fr))",
-                    gap: 18,
-                    marginTop: 20,
-                  }}
-                >
-                  {images.map(
-                    (image) => (
-                      <div
-                        key={
-                          image.id
-                        }
-                        style={{
-                          border:
-                            "1px solid #dde5ef",
-                          borderRadius:
-                            12,
-                          padding: 12,
-                          background:
-                            "#ffffff",
-                        }}
-                      >
-                        <img
-                          src={
-                            image.image_url
-                          }
-                          alt={
-                            form.product
-                          }
-                          style={{
-                            display:
-                              "block",
-                            width:
-                              "100%",
-                            height:
-                              190,
-                            objectFit:
-                              "contain",
-                            borderRadius:
-                              8,
-                          }}
-                        />
+              {images.length === 0 ? (
+  <p>
+    Todavía no hay fotografías adicionales.
+  </p>
+) : (
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns:
+        "repeat(auto-fill, minmax(180px, 1fr))",
+      gap: 18,
+      marginTop: 20,
+    }}
+  >
+    {images.map((image, index) => (
+      <div
+        key={image.id}
+        style={{
+          border: "1px solid #dde5ef",
+          borderRadius: 12,
+          padding: 12,
+          background: "#ffffff",
+        }}
+      >
+        <img
+          src={image.image_url}
+          alt={form.product}
+          style={{
+            display: "block",
+            width: "100%",
+            height: 190,
+            objectFit: "contain",
+            borderRadius: 8,
+          }}
+        />
 
-                        {form.image_url ===
-                          image.image_url && (
-                          <div
-                            style={{
-                              marginTop:
-                                8,
-                              fontWeight:
-                                700,
-                              fontSize:
-                                13,
-                            }}
-                          >
-                            ⭐ Principal
-                          </div>
-                        )}
+        {/* ORDEN DE LA FOTOGRAFÍA */}
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            marginTop: 10,
+            marginBottom: 8,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() =>
+              moveImage(image, "up")
+            }
+            disabled={index === 0}
+            style={{
+              flex: 1,
+            }}
+          >
+            ↑
+          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            makePrimary(
-                              image
-                            )
-                          }
-                          disabled={
-                            form.image_url ===
-                            image.image_url
-                          }
-                          style={{
-                            width:
-                              "100%",
-                            marginTop:
-                              10,
-                          }}
-                        >
-                          Hacer principal
-                        </button>
+          <button
+            type="button"
+            onClick={() =>
+              moveImage(image, "down")
+            }
+            disabled={
+              index === images.length - 1
+            }
+            style={{
+              flex: 1,
+            }}
+          >
+            ↓
+          </button>
+        </div>
 
-                        <button
-                          type="button"
-                          className="danger"
-                          onClick={() =>
-                            deleteGalleryImage(
-                              image
-                            )
-                          }
-                          style={{
-                            width:
-                              "100%",
-                            marginTop:
-                              8,
-                          }}
-                        >
-                          Eliminar foto
-                        </button>
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
+        {form.image_url ===
+          image.image_url && (
+          <div
+            style={{
+              marginTop: 8,
+              fontWeight: 700,
+              fontSize: 13,
+            }}
+          >
+            ⭐ Principal
+          </div>
+        )}
 
+        <button
+          type="button"
+          onClick={() =>
+            makePrimary(image)
+          }
+          disabled={
+            form.image_url ===
+            image.image_url
+          }
+          style={{
+            width: "100%",
+            marginTop: 10,
+          }}
+        >
+          Hacer principal
+        </button>
+
+        <button
+          type="button"
+          className="danger"
+          onClick={() =>
+            deleteGalleryImage(image)
+          }
+          style={{
+            width: "100%",
+            marginTop: 8,
+          }}
+        >
+          Eliminar foto
+        </button>
+      </div>
+    ))}
+  </div>
+)}
               {totalPhotos <
                 10 && (
                 <div
