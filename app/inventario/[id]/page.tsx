@@ -115,6 +115,10 @@ const [zoomPosition, setZoomPosition] =
     x: 50,
     y: 50,
   });
+
+const [draggedImageId, setDraggedImageId] =
+  useState<string | null>(null);
+
   async function loadProduct() {
     const { data, error } =
       await createClient()
@@ -664,6 +668,74 @@ async function moveImage(
 
   await loadImages();
 }
+
+async function moveImageByDrag(
+  draggedId: string,
+  targetId: string
+) {
+  if (draggedId === targetId) return;
+
+  const draggedIndex = images.findIndex(
+    (image) => image.id === draggedId
+  );
+
+  const targetIndex = images.findIndex(
+    (image) => image.id === targetId
+  );
+
+  if (
+    draggedIndex === -1 ||
+    targetIndex === -1
+  ) {
+    return;
+  }
+
+  const reordered = [...images];
+
+  const [draggedImage] =
+    reordered.splice(draggedIndex, 1);
+
+  reordered.splice(
+    targetIndex,
+    0,
+    draggedImage
+  );
+
+  setImages(reordered);
+
+  setMessage("Guardando nuevo orden...");
+
+  const supabase = createClient();
+
+  for (
+    let index = 0;
+    index < reordered.length;
+    index++
+  ) {
+    const image = reordered[index];
+
+    const { error } =
+      await supabase
+        .from("inventory_images")
+        .update({
+          sort_order: index,
+        })
+        .eq("id", image.id);
+
+    if (error) {
+      setMessage(error.message);
+      await loadImages();
+      return;
+    }
+  }
+
+  setMessage(
+    "Orden de fotografías actualizado."
+  );
+
+  await loadImages();
+}
+ 
   /*
   ==========================================
   FORMULARIO PRODUCTO
@@ -1428,15 +1500,47 @@ if (!form) {
     }}
   >
     {images.map((image, index) => (
-      <div
-        key={image.id}
-        style={{
-          border: "1px solid #dde5ef",
-          borderRadius: 12,
-          padding: 12,
-          background: "#ffffff",
-        }}
-      >
+     <div
+  key={image.id}
+  draggable
+  onDragStart={() =>
+    setDraggedImageId(image.id)
+  }
+  onDragEnd={() =>
+    setDraggedImageId(null)
+  }
+  onDragOver={(event) => {
+    event.preventDefault();
+  }}
+  onDrop={async () => {
+    if (!draggedImageId) return;
+
+    await moveImageByDrag(
+      draggedImageId,
+      image.id
+    );
+
+    setDraggedImageId(null);
+  }}
+  style={{
+    border:
+      draggedImageId === image.id
+        ? "2px dashed #2563eb"
+        : "1px solid #dde5ef",
+    borderRadius: 12,
+    padding: 12,
+    background: "#ffffff",
+    cursor: "grab",
+    opacity:
+      draggedImageId === image.id
+        ? 0.65
+        : 1,
+    boxShadow:
+      "0 3px 12px rgba(0,0,0,.08)",
+    transition:
+      "all .2s ease",
+  }}
+>
         <img
           src={image.image_url}
           alt={form.product}
@@ -1451,38 +1555,55 @@ if (!form) {
 
         {/* ORDEN DE LA FOTOGRAFÍA */}
         <div
-          style={{
-            display: "flex",
-            gap: 8,
-            marginTop: 10,
-            marginBottom: 8,
-          }}
-        >
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    gap: 12,
+    marginTop: 12,
+    marginBottom: 12,
+  }}
+>
           <button
             type="button"
             onClick={() =>
               moveImage(image, "up")
             }
             disabled={index === 0}
-            style={{
-              flex: 1,
-            }}
-          >
-            ↑
-          </button>
+           style={{
+  width: 42,
+  height: 42,
+  borderRadius: "50%",
+  border: "1px solid #d1d5db",
+  background: "#ffffff",
+  color: "#374151",
+  fontSize: 22,
+  fontWeight: 700,
+  cursor: "pointer",
+  boxShadow: "0 2px 8px rgba(0,0,0,.08)",
+}}
+>
+  ↑
+</button>
 
           <button
-            type="button"
-            onClick={() =>
-              moveImage(image, "down")
-            }
-            disabled={
-              index === images.length - 1
-            }
-            style={{
-              flex: 1,
-            }}
-          >
+  type="button"
+  onClick={() =>
+    moveImage(image, "up")
+  }
+  disabled={index === 0}
+  style={{
+    width: 42,
+    height: 42,
+    borderRadius: "50%",
+    border: "1px solid #d1d5db",
+    background: "#ffffff",
+    color: "#374151",
+    fontSize: 22,
+    fontWeight: 700,
+    cursor: "pointer",
+    boxShadow: "0 2px 8px rgba(0,0,0,.08)",
+  }}
+>
             ↓
           </button>
         </div>
