@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const navigation = [
@@ -11,30 +12,67 @@ const navigation = [
   { href: "/inventario", label: "Inventario", icon: "📦" },
   { href: "/pagos", label: "Pagos", icon: "💳" },
   { href: "/envios", label: "Envíos", icon: "🚚" },
-  { href: "/reportes", label: "Reportes", icon: "📊" }
+  { href: "/reportes", label: "Reportes", icon: "📊" },
 ];
 
 export default function AppShell({
   title,
-  children
-}: Readonly<{ title: string; children: React.ReactNode }>) {
+  children,
+}: Readonly<{
+  title: string;
+  children: React.ReactNode;
+}>) {
   const pathname = usePathname();
   const router = useRouter();
+
+  const [mobileMenuOpen, setMobileMenuOpen] =
+    useState(false);
 
   async function logout() {
     await createClient().auth.signOut();
     router.push("/login");
   }
 
+  function closeMobileMenu() {
+    setMobileMenuOpen(false);
+  }
+
   return (
     <main className="app-shell">
-      <aside className="sidebar">
-        <div className="brand-wrap">
-          <div className="brand-mark">M</div>
-          <div>
-            <div className="brand">MeriShop Flow</div>
-            <div className="brand-sub">Pro v5</div>
+      {/* Fondo oscuro al abrir menú móvil */}
+      {mobileMenuOpen && (
+        <button
+          type="button"
+          className="mobile-menu-overlay"
+          aria-label="Cerrar menú"
+          onClick={closeMobileMenu}
+        />
+      )}
+
+      {/* SIDEBAR */}
+      <aside
+        className={`sidebar ${
+          mobileMenuOpen ? "mobile-open" : ""
+        }`}
+      >
+        <div className="sidebar-brand">
+          <div className="sidebar-logo">
+            M
           </div>
+
+          <div>
+            <strong>MeriShop Flow</strong>
+            <span>Pro v5</span>
+          </div>
+
+          <button
+            type="button"
+            className="mobile-close-button"
+            onClick={closeMobileMenu}
+            aria-label="Cerrar menú"
+          >
+            ×
+          </button>
         </div>
 
         <nav>
@@ -42,7 +80,12 @@ export default function AppShell({
             <Link
               key={item.href}
               href={item.href}
-              className={pathname === item.href ? "active" : ""}
+              onClick={closeMobileMenu}
+              className={
+                pathname === item.href
+                  ? "active"
+                  : ""
+              }
             >
               <span>{item.icon}</span>
               {item.label}
@@ -52,18 +95,45 @@ export default function AppShell({
 
         <div className="sidebar-footer">
           <span>Administrador</span>
-          <button type="button" onClick={logout}>Cerrar sesión</button>
+
+          <button
+            type="button"
+            onClick={logout}
+          >
+            Cerrar sesión
+          </button>
         </div>
       </aside>
 
+      {/* CONTENIDO */}
       <section className="main-content">
         <header className="topbar">
-          <div>
-            <h1>{title}</h1>
-            <p>Administración de MeriShop</p>
+          <div className="topbar-left">
+            {/* Botón visible solamente en teléfono */}
+            <button
+              type="button"
+              className="mobile-menu-button"
+              onClick={() =>
+                setMobileMenuOpen(true)
+              }
+              aria-label="Abrir menú"
+            >
+              ☰
+            </button>
+
+            <div>
+              <h1>{title}</h1>
+              <p>
+                Administración de MeriShop
+              </p>
+            </div>
           </div>
-          <div className="topbar-pill">MeriShop Flow Pro</div>
+
+          <div className="topbar-pill">
+            MeriShop Flow Pro
+          </div>
         </header>
+
         {children}
       </section>
     </main>
