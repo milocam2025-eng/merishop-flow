@@ -13,7 +13,9 @@ import {
 
 import AppShell from "@/components/AppShell";
 import AuthGuard from "@/components/AuthGuard";
+import CameraPicker from "@/components/CameraPicker";
 import { createClient } from "@/lib/supabase/client";
+
 
 type Product = {
   id: string;
@@ -118,7 +120,8 @@ const [zoomPosition, setZoomPosition] =
 
 const [draggedImageId, setDraggedImageId] =
   useState<string | null>(null);
-
+const [dragOverImageId, setDragOverImageId] =
+  useState<string | null>(null);
   async function loadProduct() {
     const { data, error } =
       await createClient()
@@ -1432,19 +1435,27 @@ if (!form) {
                 marginTop: 15,
               }}
             >
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(
-                  event
-                ) =>
-                  setImageFile(
-                    event.target
-                      .files?.[0] ??
-                      null
-                  )
-                }
-              />
+             <div
+  style={{
+    display: "flex",
+    gap: 12,
+    flexWrap: "wrap",
+    marginTop: 15,
+  }}
+>
+  {/* TOMAR FOTO CON EL TELÉFONO */}
+  
+<div
+  style={{
+    marginTop: 15,
+  }}
+>
+<CameraPicker
+  onFileSelected={(file) =>
+    setGalleryFile(file)
+  }
+/>
+</div>
 
               <br />
 
@@ -1467,6 +1478,7 @@ if (!form) {
                   ? "Reemplazar fotografía principal"
                   : "Subir fotografía principal"}
               </button>
+            </div>
             </div>
 
             {/* =========================
@@ -1499,49 +1511,128 @@ if (!form) {
       marginTop: 20,
     }}
   >
-    {images.map((image, index) => (
-     <div
-  key={image.id}
-  draggable
-  onDragStart={() =>
-    setDraggedImageId(image.id)
-  }
-  onDragEnd={() =>
-    setDraggedImageId(null)
-  }
-  onDragOver={(event) => {
-    event.preventDefault();
-  }}
-  onDrop={async () => {
-    if (!draggedImageId) return;
+  
+ {images.map((image, index) => (
+  <div
+    key={image.id}
+    draggable
+    onDragStart={() => {
+      setDraggedImageId(image.id);
+    }}
+    onDragEnd={() => {
+      setDraggedImageId(null);
+      setDragOverImageId(null);
+    }}
+    onDragOver={(event) => {
+      event.preventDefault();
+      setDragOverImageId(image.id);
+    }}
+    onDragLeave={() => {
+      setDragOverImageId(null);
+    }}
+    onDrop={async () => {
+      if (!draggedImageId) return;
 
-    await moveImageByDrag(
-      draggedImageId,
-      image.id
-    );
+      setDragOverImageId(null);
 
-    setDraggedImageId(null);
-  }}
+      await moveImageByDrag(
+        draggedImageId,
+        image.id
+      );
+
+      setDraggedImageId(null);
+    }}
+    style={{
+      border:
+        dragOverImageId === image.id &&
+        draggedImageId !== image.id
+          ? "2px solid #2563eb"
+          : draggedImageId === image.id
+          ? "2px dashed #2563eb"
+          : "1px solid #dde5ef",
+
+      borderRadius: 16,
+      padding: 14,
+
+      background:
+        dragOverImageId === image.id &&
+        draggedImageId !== image.id
+          ? "#eff6ff"
+          : "#ffffff",
+
+      cursor: "grab",
+
+      opacity:
+        draggedImageId === image.id
+          ? 0.55
+          : 1,
+
+      transform:
+        draggedImageId === image.id
+          ? "scale(0.97)"
+          : "scale(1)",
+
+      boxShadow:
+        draggedImageId === image.id
+          ? "0 12px 30px rgba(37,99,235,.25)"
+          : "0 6px 18px rgba(15,23,42,.08)",
+
+      transition: "all .18s ease",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 10,
+        paddingBottom: 8,
+        borderBottom: "1px solid #eef2f7",
+        fontSize: 13,
+        fontWeight: 700,
+        color: "#64748b",
+      }}
+    >
+      <span>⋮⋮ Arrastrar</span>
+
+      <span>
+        Foto {index + 1}
+      </span>
+    </div>
+
+<img
+  src={image.image_url}
+  alt={form.product}
   style={{
-    border:
-      draggedImageId === image.id
-        ? "2px dashed #2563eb"
-        : "1px solid #dde5ef",
+    display: "block",
+    width: "100%",
+    height: 210,
+    objectFit: "contain",
     borderRadius: 12,
-    padding: 12,
-    background: "#ffffff",
-    cursor: "grab",
-    opacity:
-      draggedImageId === image.id
-        ? 0.65
-        : 1,
-    boxShadow:
-      "0 3px 12px rgba(0,0,0,.08)",
-    transition:
-      "all .2s ease",
+    background: "#f8fafc",
+    padding: 6,
+  }}
+/>
+ <div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+    paddingBottom: 8,
+    borderBottom: "1px solid #eef2f7",
+    fontSize: 13,
+    fontWeight: 700,
+    color: "#64748b",
   }}
 >
-        <img
+  <span>⋮⋮ Arrastrar</span>
+
+  <span>
+    Foto {index + 1}
+  </span>
+</div>
+     <img
           src={image.image_url}
           alt={form.product}
           style={{
@@ -1582,6 +1673,18 @@ if (!form) {
   boxShadow: "0 2px 8px rgba(0,0,0,.08)",
 }}
 >
+<div
+  style={{
+    marginTop: 10,
+    minHeight: 22,
+    fontSize: 13,
+    fontWeight: 700,
+  }}
+>
+  {form.image_url === image.image_url
+    ? "⭐ Foto principal"
+    : "Fotografía secundaria"}
+</div>
   ↑
 </button>
 
@@ -1622,35 +1725,59 @@ if (!form) {
         )}
 
         <button
-          type="button"
-          onClick={() =>
-            makePrimary(image)
-          }
-          disabled={
-            form.image_url ===
-            image.image_url
-          }
-          style={{
-            width: "100%",
-            marginTop: 10,
-          }}
-        >
-          Hacer principal
-        </button>
+  type="button"
+  onClick={() =>
+    makePrimary(image)
+  }
+  disabled={
+    form.image_url ===
+    image.image_url
+  }
+  style={{
+    width: "100%",
+    marginTop: 10,
+    padding: "10px 14px",
+    borderRadius: 10,
+    border: "1px solid #bfdbfe",
+    background:
+      form.image_url === image.image_url
+        ? "#eff6ff"
+        : "#ffffff",
+    color: "#1d4ed8",
+    fontSize: 14,
+    fontWeight: 700,
+    cursor:
+      form.image_url === image.image_url
+        ? "default"
+        : "pointer",
+  }}
+>
+  ⭐{" "}
+  {form.image_url === image.image_url
+    ? "Foto principal"
+    : "Hacer principal"}
+</button>
 
-        <button
-          type="button"
-          className="danger"
-          onClick={() =>
-            deleteGalleryImage(image)
-          }
-          style={{
-            width: "100%",
-            marginTop: 8,
-          }}
-        >
-          Eliminar foto
-        </button>
+       <button
+  type="button"
+  onClick={() =>
+    deleteGalleryImage(image)
+  }
+  style={{
+    width: "100%",
+    marginTop: 8,
+    padding: "10px 14px",
+    borderRadius: 10,
+    border: "1px solid #fecaca",
+    background: "#fff7f7",
+    color: "#dc2626",
+    fontSize: 14,
+    fontWeight: 700,
+    cursor: "pointer",
+  }}
+>
+  🗑 Eliminar fotografía
+</button>
       </div>
     ))}
   </div>
@@ -1665,6 +1792,29 @@ if (!form) {
                   <h3>
                     Agregar otra fotografía
                   </h3>
+<CameraPicker
+  onFileSelected={(file) =>
+    setGalleryFile(file)
+  }
+/>
+
+<br />
+
+<button
+  type="button"
+  onClick={uploadGalleryImage}
+  disabled={
+    !galleryFile ||
+    uploadingGallery
+  }
+  style={{
+    marginTop: 15,
+  }}
+>
+  {uploadingGallery
+    ? "Subiendo..."
+    : "Agregar a galería"}
+</button>
 
                   <input
                     type="file"
