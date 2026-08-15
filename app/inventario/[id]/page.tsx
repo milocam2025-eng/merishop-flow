@@ -1636,39 +1636,8 @@ if (!form) {
     padding: 6,
   }}
 />
- <div
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-    paddingBottom: 8,
-    borderBottom: "1px solid #eef2f7",
-    fontSize: 13,
-    fontWeight: 700,
-    color: "#64748b",
-  }}
->
-  <span>⋮⋮ Arrastrar</span>
-
-  <span>
-    Foto {index + 1}
-  </span>
-</div>
-     <img
-          src={image.image_url}
-          alt={form.product}
-          style={{
-            display: "block",
-            width: "100%",
-            height: 190,
-            objectFit: "contain",
-            borderRadius: 8,
-          }}
-        />
-
-        {/* ORDEN DE LA FOTOGRAFÍA */}
-        <div
+{/* ORDEN DE LA FOTOGRAFÍA */}
+<div
   style={{
     display: "flex",
     justifyContent: "center",
@@ -1677,88 +1646,101 @@ if (!form) {
     marginBottom: 12,
   }}
 >
-          <button
-            type="button"
-            onClick={() =>
-              moveImage(image, "up")
-            }
-            disabled={index === 0}
-           style={{
-  width: 42,
-  height: 42,
-  borderRadius: "50%",
-  border: "1px solid #d1d5db",
-  background: "#ffffff",
-  color: "#374151",
-  fontSize: 22,
-  fontWeight: 700,
-  cursor: "pointer",
-  boxShadow: "0 2px 8px rgba(0,0,0,.08)",
-}}
->
+  <button
+    type="button"
+    onClick={() =>
+      moveImage(image, "up")
+    }
+    disabled={index === 0}
+    style={{
+      width: 42,
+      height: 42,
+      borderRadius: "50%",
+      border: "1px solid #d1d5db",
+      background: "#ffffff",
+      color: "#374151",
+      fontSize: 22,
+      fontWeight: 700,
+      cursor:
+        index === 0
+          ? "default"
+          : "pointer",
+      opacity:
+        index === 0
+          ? 0.4
+          : 1,
+      boxShadow:
+        "0 2px 8px rgba(0,0,0,.08)",
+    }}
+  >
+    ↑
+  </button>
+
+  <button
+    type="button"
+    onClick={() =>
+      moveImage(image, "down")
+    }
+    disabled={
+      index === images.length - 1
+    }
+    style={{
+      width: 42,
+      height: 42,
+      borderRadius: "50%",
+      border: "1px solid #d1d5db",
+      background: "#ffffff",
+      color: "#374151",
+      fontSize: 22,
+      fontWeight: 700,
+      cursor:
+        index === images.length - 1
+          ? "default"
+          : "pointer",
+      opacity:
+        index === images.length - 1
+          ? 0.4
+          : 1,
+      boxShadow:
+        "0 2px 8px rgba(0,0,0,.08)",
+    }}
+  >
+    ↓
+  </button>
+</div>
+
+{/* ESTADO DE LA FOTO */}
 <div
   style={{
-    marginTop: 10,
     minHeight: 22,
+    marginTop: 6,
+    marginBottom: 8,
+    textAlign: "center",
     fontSize: 13,
     fontWeight: 700,
+    color:
+      form.image_url === image.image_url
+        ? "#b7791f"
+        : "#64748b",
   }}
 >
   {form.image_url === image.image_url
     ? "⭐ Foto principal"
-    : "Fotografía secundaria"}
+    : "Foto secundaria"}
 </div>
-  ↑
-</button>
 
-          <button
-  type="button"
-  onClick={() =>
-    moveImage(image, "up")
-  }
-  disabled={index === 0}
-  style={{
-    width: 42,
-    height: 42,
-    borderRadius: "50%",
-    border: "1px solid #d1d5db",
-    background: "#ffffff",
-    color: "#374151",
-    fontSize: 22,
-    fontWeight: 700,
-    cursor: "pointer",
-    boxShadow: "0 2px 8px rgba(0,0,0,.08)",
-  }}
->
-            ↓
-          </button>
-        </div>
-
-        {form.image_url ===
-          image.image_url && (
-          <div
-            style={{
-              marginTop: 8,
-              fontWeight: 700,
-              fontSize: 13,
-            }}
-          >
-            ⭐ Principal
-          </div>
-        )}
-
-        <button
+{/* HACER PRINCIPAL */}
+<button
   type="button"
   onClick={() =>
     makePrimary(image)
   }
   disabled={
-    form.image_url ===
-    image.image_url
+    form.image_url === image.image_url
   }
   style={{
     width: "100%",
-    marginTop: 10,
+    marginTop: 6,
     padding: "10px 14px",
     borderRadius: 10,
     border: "1px solid #bfdbfe",
@@ -1775,10 +1757,9 @@ if (!form) {
         : "pointer",
   }}
 >
-  ⭐{" "}
   {form.image_url === image.image_url
-    ? "Foto principal"
-    : "Hacer principal"}
+    ? "⭐ Foto principal"
+    : "⭐ Hacer principal"}
 </button>
 
        <button
