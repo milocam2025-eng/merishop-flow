@@ -204,24 +204,40 @@ const [dragOverImageId, setDragOverImageId] =
   ==========================================
   */
 
-  async function uploadMainImage() {
-  if (!imageFile) {
-    setMessage("Selecciona una fotografía primero.");
+  async function uploadMainImage(
+  selectedFile?: File
+) {
+  const file =
+    selectedFile ?? imageFile;
+
+  if (!file) {
+    setMessage(
+      "Selecciona una fotografía primero."
+    );
     return;
   }
 
-  if (!imageFile.type.startsWith("image/")) {
-    setMessage("El archivo seleccionado no es una imagen.");
+  if (!file.type.startsWith("image/")) {
+    setMessage(
+      "El archivo seleccionado no es una imagen."
+    );
     return;
   }
 
-  if (imageFile.size > 5 * 1024 * 1024) {
-    setMessage("La fotografía no puede superar 5 MB.");
+  if (file.size > 5 * 1024 * 1024) {
+    setMessage(
+      "La fotografía no puede superar 5 MB."
+    );
     return;
   }
+
+  if (uploading) return;
 
   setUploading(true);
-  setMessage("Subiendo fotografía principal...");
+
+  setMessage(
+    "Subiendo fotografía principal..."
+  );
 
   const supabase = createClient();
 
@@ -232,22 +248,35 @@ const [dragOverImageId, setDragOverImageId] =
 
   if (userError || !user) {
     setUploading(false);
-    setMessage("No se encontró una sesión activa.");
+
+    setMessage(
+      "No se encontró una sesión activa."
+    );
+
     return;
   }
 
   const extension =
-    imageFile.name.split(".").pop()?.toLowerCase() || "jpg";
+    file.name
+      .split(".")
+      .pop()
+      ?.toLowerCase() || "jpg";
 
   const filePath =
-    `${user.id}/${id}/principal-${Date.now()}.${extension}`;
+    `${user.id}/${id}/principal-` +
+    `${Date.now()}.${extension}`;
 
-  const { error: uploadError } = await supabase.storage
-    .from("product-images")
-    .upload(filePath, imageFile, {
-      cacheControl: "3600",
-      upsert: false,
-    });
+  const { error: uploadError } =
+    await supabase.storage
+      .from("product-images")
+      .upload(
+        filePath,
+        file,
+        {
+          cacheControl: "3600",
+          upsert: false,
+        }
+      );
 
   if (uploadError) {
     setUploading(false);
@@ -255,56 +284,69 @@ const [dragOverImageId, setDragOverImageId] =
     return;
   }
 
-  const { data: publicData } = supabase.storage
-    .from("product-images")
-    .getPublicUrl(filePath);
+  const { data: publicData } =
+    supabase.storage
+      .from("product-images")
+      .getPublicUrl(filePath);
 
-  const imageUrl = publicData.publicUrl;
+  const imageUrl =
+    publicData.publicUrl;
 
-  // Quitar marca de principal a las fotos anteriores
-  const { error: resetPrimaryError } = await supabase
-    .from("inventory_images")
-    .update({
-      is_primary: false,
-    })
-    .eq("inventory_id", id);
+  // Quitar la marca de principal
+  // a las fotografías anteriores
+  const { error: resetPrimaryError } =
+    await supabase
+      .from("inventory_images")
+      .update({
+        is_primary: false,
+      })
+      .eq("inventory_id", id);
 
   if (resetPrimaryError) {
     setUploading(false);
-    setMessage(resetPrimaryError.message);
+    setMessage(
+      resetPrimaryError.message
+    );
     return;
   }
 
-  // Registrar la nueva foto como principal
-  const { error: imageInsertError } = await supabase
-    .from("inventory_images")
-    .insert({
-      inventory_id: id,
-      user_id: user.id,
-      image_url: imageUrl,
-      storage_path: filePath,
-      is_primary: true,
-      sort_order: 0,
-    });
+  // Registrar nueva fotografía
+  // como principal
+  const { error: imageInsertError } =
+    await supabase
+      .from("inventory_images")
+      .insert({
+        inventory_id: id,
+        user_id: user.id,
+        image_url: imageUrl,
+        storage_path: filePath,
+        is_primary: true,
+        sort_order: 0,
+      });
 
   if (imageInsertError) {
     setUploading(false);
-    setMessage(imageInsertError.message);
+    setMessage(
+      imageInsertError.message
+    );
     return;
   }
 
-  // Mantener image_url para que la tabla del inventario
-  // siga mostrando la miniatura principal
-  const { error: updateError } = await supabase
-    .from("inventory")
-    .update({
-      image_url: imageUrl,
-    })
-    .eq("id", id);
+  // Actualizar miniatura principal
+  // del inventario
+  const { error: updateError } =
+    await supabase
+      .from("inventory")
+      .update({
+        image_url: imageUrl,
+      })
+      .eq("id", id);
 
   if (updateError) {
     setUploading(false);
-    setMessage(updateError.message);
+    setMessage(
+      updateError.message
+    );
     return;
   }
 
@@ -317,7 +359,6 @@ const [dragOverImageId, setDragOverImageId] =
 
   await loadAll();
 }
-
   /*
   ==========================================
   AGREGAR FOTO A GALERÍA
@@ -1451,9 +1492,13 @@ if (!form) {
   }}
 >
 <CameraPicker
-  onFileSelected={(file) =>
-    setImageFile(file)
-  }
+  onFileSelected={async (file) => {
+    if (!file) return;
+
+    setImageFile(file);
+
+    await uploadMainImage(file);
+  }}
 />
 {imageFile && (
   <div
@@ -1484,9 +1529,10 @@ if (!form) {
 
               <button
                 type="button"
-                onClick={
-                  uploadMainImage
-                }
+                
+onClick={() =>
+  uploadMainImage()
+}                
                 disabled={
                   !imageFile ||
                   uploading
