@@ -1452,10 +1452,10 @@ if (!form) {
 >
 <CameraPicker
   onFileSelected={(file) =>
-    setGalleryFile(file)
+    setImageFile(file)
   }
 />
-{galleryFile && (
+{imageFile && (
   <div
     style={{
       marginTop: 10,
@@ -1468,14 +1468,14 @@ if (!form) {
     <strong>Foto seleccionada:</strong>
     <br />
 
-    {galleryFile.name}
+    {imageFile.name}
     <br />
 
     Tamaño:{" "}
-    {(galleryFile.size / 1024 / 1024).toFixed(2)} MB
+    {(imageFile.size / 1024 / 1024).toFixed(2)} MB
     <br />
 
-    Tipo: {galleryFile.type || "sin tipo"}
+    Tipo: {imageFile.type || "sin tipo"}
   </div>
 )}
 </div>
