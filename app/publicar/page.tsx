@@ -32,6 +32,9 @@ export default function PublicarPage() {
   const [photo, setPhoto] =
     useState<File | null>(null);
 
+  const [generatedImage, setGeneratedImage] =
+    useState<string | null>(null);
+
   const [previewUrl, setPreviewUrl] =
     useState<string | null>(null);
 
@@ -104,6 +107,184 @@ export default function PublicarPage() {
     exchangeRate,
   ]);
 
+async function createWhatsAppImage() {
+  if (!photo) {
+    return;
+  }
+
+  if (calculations.totalMxn <= 0) {
+    return;
+  }
+
+  const canvas =
+    document.createElement("canvas");
+
+  const ctx =
+    canvas.getContext("2d");
+
+  if (!ctx) {
+    return;
+  }
+
+  // Tamaño vertical ideal para publicación
+  canvas.width = 1080;
+  canvas.height = 1350;
+
+  const image = new Image();
+
+  const photoUrl =
+    URL.createObjectURL(photo);
+
+  image.src = photoUrl;
+
+  try {
+    await new Promise<void>(
+      (resolve, reject) => {
+        image.onload = () => resolve();
+        image.onerror = () => reject();
+      }
+    );
+
+    // Fondo blanco
+    ctx.fillStyle = "#ffffff";
+
+    ctx.fillRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    // =========================
+    // FOTOGRAFÍA
+    // =========================
+
+    const photoHeight = 1000;
+
+    const scale = Math.min(
+      canvas.width / image.width,
+      photoHeight / image.height
+    );
+
+    const drawWidth =
+      image.width * scale;
+
+    const drawHeight =
+      image.height * scale;
+
+    const x =
+      (canvas.width - drawWidth) / 2;
+
+    const y =
+      (photoHeight - drawHeight) / 2;
+
+    ctx.drawImage(
+      image,
+      x,
+      y,
+      drawWidth,
+      drawHeight
+    );
+
+    // =========================
+    // PANEL MERISHOP
+    // =========================
+
+    ctx.fillStyle = "#0f2742";
+
+    ctx.fillRect(
+      0,
+      1000,
+      1080,
+      350
+    );
+
+    // Nombre MeriShop
+    ctx.fillStyle = "#ffffff";
+
+    ctx.font =
+      "700 42px Arial";
+
+    ctx.fillText(
+      "MeriShop",
+      60,
+      1070
+    );
+
+    // Producto
+    if (product) {
+      ctx.font =
+        "500 34px Arial";
+
+      ctx.fillText(
+        product,
+        60,
+        1130
+      );
+    }
+
+    // Marca y talla
+    const details = [
+      brand,
+      size
+        ? `Talla ${size}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join(" • ");
+
+    if (details) {
+      ctx.fillStyle =
+        "#cbd5e1";
+
+      ctx.font =
+        "500 28px Arial";
+
+      ctx.fillText(
+        details,
+        60,
+        1185
+      );
+    }
+
+    // =========================
+    // PRECIO FINAL
+    // =========================
+
+    const finalPrice =
+      moneyMXN(
+        calculations.totalMxn
+      );
+
+    ctx.fillStyle = "#ffffff";
+
+    ctx.font =
+      "800 72px Arial";
+
+    ctx.fillText(
+      finalPrice,
+      60,
+      1285
+    );
+
+    // Crear imagen final
+    const dataUrl =
+      canvas.toDataURL(
+        "image/jpeg",
+        0.92
+      );
+
+    setGeneratedImage(
+      dataUrl
+    );
+  } finally {
+    URL.revokeObjectURL(
+      photoUrl
+    );
+  }
+}
+
+ 
   function handlePhoto(
     file: File | null
   ) {
@@ -413,22 +594,46 @@ export default function PublicarPage() {
               </div>
             </div>
 
-            <button
-              type="button"
-              disabled={
-                !photo ||
-                calculations.totalMxn <=
-                  0
-              }
-              style={{
-                width: "100%",
-                padding: 15,
-                fontSize: 16,
-                fontWeight: 800,
-              }}
-            >
-              ✨ Crear imagen para WhatsApp
-            </button>
+           <button
+  type="button"
+  onClick={createWhatsAppImage}
+  disabled={
+    !photo ||
+    calculations.totalMxn <= 0
+  }
+  style={{
+    width: "100%",
+    padding: 15,
+    fontSize: 16,
+    fontWeight: 800,
+  }}
+>
+  ✨ Crear imagen para WhatsApp
+</button>
+{generatedImage && (
+  <div
+    style={{
+      marginTop: 25,
+    }}
+  >
+    <h2>
+      Vista previa para WhatsApp
+    </h2>
+
+    <img
+      src={generatedImage}
+      alt="Publicación MeriShop"
+      style={{
+        display: "block",
+        width: "100%",
+        maxWidth: 500,
+        marginTop: 15,
+        borderRadius: 14,
+        border: "1px solid #dbe3ec",
+      }}
+    />
+  </div>
+)}
           </div>
         </section>
       </AppShell>
