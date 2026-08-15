@@ -632,8 +632,29 @@ async function createWhatsAppImage() {
         border: "1px solid #dbe3ec",
       }}
     />
+  <a
+      href={generatedImage}
+      download={`merishop-${product || "producto"}.jpg`}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100%",
+        maxWidth: 500,
+        marginTop: 15,
+        padding: "12px 16px",
+        borderRadius: 10,
+        background: "#0f2742",
+        color: "#ffffff",
+        fontWeight: 800,
+        textDecoration: "none",
+      }}
+    >
+      📥 Guardar imagen
+    </a>
   </div>
 )}
+  
           </div>
         </section>
       </AppShell>
