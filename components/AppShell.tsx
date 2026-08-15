@@ -10,11 +10,17 @@ const navigation = [
   { href: "/clientes", label: "Clientes", icon: "👥" },
   { href: "/pedidos", label: "Pedidos", icon: "🛍️" },
   { href: "/inventario", label: "Inventario", icon: "📦" },
+
+  {
+    href: "/publicar",
+    label: "Publicar",
+    icon: "📲",
+  },
+
   { href: "/pagos", label: "Pagos", icon: "💳" },
   { href: "/envios", label: "Envíos", icon: "🚚" },
   { href: "/reportes", label: "Reportes", icon: "📊" },
 ];
-
 export default function AppShell({
   title,
   children,
