@@ -365,150 +365,135 @@ const [dragOverImageId, setDragOverImageId] =
   ==========================================
   */
 
-  async function uploadGalleryImage() {
-    if (!galleryFile) {
-      setMessage(
-        "Selecciona una fotografía para la galería."
-      );
-      return;
-    }
+  async function uploadGalleryImage(
+  selectedFile?: File
+) {
+  const file =
+    selectedFile ?? galleryFile;
 
-    if (!galleryFile.type.startsWith("image/")) {
-      setMessage(
-        "El archivo seleccionado no es una imagen."
-      );
-      return;
-    }
-
-    if (
-      galleryFile.size >
-      5 * 1024 * 1024
-    ) {
-      setMessage(
-        "La fotografía no puede superar 5 MB."
-      );
-      return;
-    }
-
-    /*
-      Máximo recomendado:
-      foto principal + 9 adicionales = 10
-    */
-
-    const totalPhotos =
-      images.length +
-      (form?.image_url ? 1 : 0);
-
-    if (totalPhotos >= 10) {
-      setMessage(
-        "Este producto ya tiene el máximo de 10 fotografías."
-      );
-      return;
-    }
-
-    setUploadingGallery(true);
-
+  if (!file) {
     setMessage(
-      "Agregando fotografía a la galería..."
+      "Selecciona una fotografía para la galería."
     );
+    return;
+  }
 
-    const supabase = createClient();
+  if (!file.type.startsWith("image/")) {
+    setMessage(
+      "El archivo seleccionado no es una imagen."
+    );
+    return;
+  }
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+  if (file.size > 5 * 1024 * 1024) {
+    setMessage(
+      "La fotografía no puede superar 5 MB."
+    );
+    return;
+  }
 
-    if (userError || !user) {
-      setUploadingGallery(false);
+  if (uploadingGallery) return;
 
-      setMessage(
-        "No se encontró una sesión activa."
-      );
+  const totalPhotos =
+    images.length;
 
-      return;
-    }
+  if (totalPhotos >= 10) {
+    setMessage(
+      "Este producto ya tiene el máximo de 10 fotografías."
+    );
+    return;
+  }
 
-    const extension =
-      galleryFile.name
-        .split(".")
-        .pop()
-        ?.toLowerCase() || "jpg";
+  setUploadingGallery(true);
 
-    const filePath =
-      `${user.id}/${id}/galeria-` +
-      `${Date.now()}.${extension}`;
+  setMessage(
+    "Agregando fotografía a la galería..."
+  );
 
-    const { error: uploadError } =
-      await supabase.storage
-        .from("product-images")
-        .upload(
-          filePath,
-          galleryFile,
-          {
-            cacheControl: "3600",
-            upsert: false,
-          }
-        );
+  const supabase = createClient();
 
-    if (uploadError) {
-      setUploadingGallery(false);
-      setMessage(uploadError.message);
-      return;
-    }
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-    const { data: publicData } =
-      supabase.storage
-        .from("product-images")
-        .getPublicUrl(filePath);
-
-    const imageUrl =
-      publicData.publicUrl;
-
-    const { error: insertError } =
-  await supabase
-    .from("inventory_images")
-    .insert({
-      inventory_id: id,
-      user_id: user.id,
-
-      image_url: imageUrl,
-      storage_path: filePath,
-
-      is_primary: false,
-      sort_order: images.length + 1,
-    });
-
-    if (insertError) {
-      /*
-        Si falla la base de datos,
-        borramos la imagen recién subida
-        para no dejar archivos huérfanos.
-      */
-
-      await supabase.storage
-        .from("product-images")
-        .remove([filePath]);
-
-      setUploadingGallery(false);
-
-      setMessage(
-        insertError.message
-      );
-
-      return;
-    }
-
-    setGalleryFile(null);
-
+  if (userError || !user) {
     setUploadingGallery(false);
 
     setMessage(
-      "Fotografía agregada a la galería."
+      "No se encontró una sesión activa."
     );
 
-    await loadImages();
+    return;
   }
+
+  const extension =
+    file.name
+      .split(".")
+      .pop()
+      ?.toLowerCase() || "jpg";
+
+  const filePath =
+    `${user.id}/${id}/galeria-` +
+    `${Date.now()}.${extension}`;
+
+  const { error: uploadError } =
+    await supabase.storage
+      .from("product-images")
+      .upload(
+        filePath,
+        file,
+        {
+          cacheControl: "3600",
+          upsert: false,
+        }
+      );
+
+  if (uploadError) {
+    setUploadingGallery(false);
+    setMessage(uploadError.message);
+    return;
+  }
+
+  const { data: publicData } =
+    supabase.storage
+      .from("product-images")
+      .getPublicUrl(filePath);
+
+  const imageUrl =
+    publicData.publicUrl;
+
+  const { error: insertError } =
+    await supabase
+      .from("inventory_images")
+      .insert({
+        inventory_id: id,
+        user_id: user.id,
+        image_url: imageUrl,
+        storage_path: filePath,
+        is_primary: false,
+        sort_order: images.length + 1,
+      });
+
+  if (insertError) {
+    await supabase.storage
+      .from("product-images")
+      .remove([filePath]);
+
+    setUploadingGallery(false);
+    setMessage(insertError.message);
+    return;
+  }
+
+  setGalleryFile(null);
+  setUploadingGallery(false);
+
+  setMessage(
+    "Fotografía agregada automáticamente a la galería."
+  );
+
+  await loadImages();
+}
 
   /*
   ==========================================
@@ -1843,16 +1828,20 @@ onClick={() =>
                     Agregar otra fotografía
                   </h3>
 <CameraPicker
-  onFileSelected={(file) =>
-    setGalleryFile(file)
-  }
+  onFileSelected={async (file) => {
+    if (!file) return;
+
+    setGalleryFile(file);
+
+    await uploadGalleryImage(file);
+  }}
 />
 
 <br />
 
 <button
   type="button"
-  onClick={uploadGalleryImage}
+onClick={() => uploadGalleryImage()}
   disabled={
     !galleryFile ||
     uploadingGallery
@@ -1866,39 +1855,7 @@ onClick={() =>
     : "Agregar a galería"}
 </button>
 
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={(
-                      event
-                    ) =>
-                      setGalleryFile(
-                        event.target
-                          .files?.[0] ??
-                          null
-                      )
-                    }
-                  />
-
-                  <br />
-
-                  <button
-                    type="button"
-                    onClick={
-                      uploadGalleryImage
-                    }
-                    disabled={
-                      !galleryFile ||
-                      uploadingGallery
-                    }
-                    style={{
-                      marginTop: 15,
-                    }}
-                  >
-                    {uploadingGallery
-                      ? "Subiendo..."
-                      : "Agregar a galería"}
-                  </button>
+             
                 </div>
               )}
             </div>
