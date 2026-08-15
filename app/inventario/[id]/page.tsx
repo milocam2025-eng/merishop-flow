@@ -1455,6 +1455,29 @@ if (!form) {
     setGalleryFile(file)
   }
 />
+{galleryFile && (
+  <div
+    style={{
+      marginTop: 10,
+      padding: 10,
+      borderRadius: 8,
+      background: "#f1f5f9",
+      fontSize: 14,
+    }}
+  >
+    <strong>Foto seleccionada:</strong>
+    <br />
+
+    {galleryFile.name}
+    <br />
+
+    Tamaño:{" "}
+    {(galleryFile.size / 1024 / 1024).toFixed(2)} MB
+    <br />
+
+    Tipo: {galleryFile.type || "sin tipo"}
+  </div>
+)}
 </div>
 
               <br />
