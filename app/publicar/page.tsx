@@ -443,31 +443,48 @@ async function createWhatsAppImage() {
 
     const photoHeight = 1000;
 
-    const scale = Math.min(
-      canvas.width / image.width,
-      photoHeight / image.height
-    );
+// Modo COVER:
+// llena completamente el área de la fotografía
+const scale = Math.max(
+  canvas.width / image.width,
+  photoHeight / image.height
+);
 
-    const drawWidth =
-      image.width * scale;
+const drawWidth =
+  image.width * scale;
 
-    const drawHeight =
-      image.height * scale;
+const drawHeight =
+  image.height * scale;
 
-    const x =
-      (canvas.width - drawWidth) / 2;
+// Centrar la fotografía
+const x =
+  (canvas.width - drawWidth) / 2;
 
-    const y =
-      (photoHeight - drawHeight) / 2;
+const y =
+  (photoHeight - drawHeight) / 2;
 
-    ctx.drawImage(
-      image,
-      x,
-      y,
-      drawWidth,
-      drawHeight
-    );
+// Recortar únicamente lo que sobresale
+ctx.save();
 
+ctx.beginPath();
+ctx.rect(
+  0,
+  0,
+  canvas.width,
+  photoHeight
+);
+
+ctx.clip();
+
+ctx.drawImage(
+  image,
+  x,
+  y,
+  drawWidth,
+  drawHeight
+);
+
+ctx.restore();
     // =========================
     // PANEL MERISHOP
     // =========================
