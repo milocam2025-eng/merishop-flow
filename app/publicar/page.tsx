@@ -507,27 +507,26 @@ ctx.textAlign = "left";
 ctx.fillStyle = "#ffffff";
 
 ctx.font =
-  "700 44px Arial";
+  "700 50px Arial";
 
 ctx.fillText(
   "MeriShop",
   55,
-  1110
+  1080
 );
-
 
 // TIENDA
 if (currentStore) {
   ctx.fillStyle = "#93c5fd";
 
-  ctx.font =
-    "700 25px Arial";
+ctx.font =
+  "700 29px Arial";
 
-  ctx.fillText(
-    `📍 ${currentStore.toUpperCase()}`,
-    55,
-    1155
-  );
+ctx.fillText(
+  `📍 ${currentStore.toUpperCase()}`,
+  55,
+  1130
+);
 }
 
 
@@ -535,15 +534,15 @@ if (currentStore) {
 if (product) {
   ctx.fillStyle = "#ffffff";
 
-  ctx.font =
-    "700 32px Arial";
+ctx.font =
+  "700 37px Arial";
 
-  ctx.fillText(
-    product,
-    55,
-    1205,
-    420
-  );
+ctx.fillText(
+  product,
+  55,
+  1185,
+  440
+);
 }
 
 
@@ -563,16 +562,16 @@ const details = [
 if (details) {
   ctx.fillStyle = "#ffffff";
 
-  ctx.font =
-    "600 23px Arial";
+ctx.font =
+  "600 27px Arial";
 
-  ctx.fillText(
-    details,
-    55,
-    1250,
-    450
-  );
-}
+ctx.fillText(
+  details,
+  55,
+  1235,
+  480
+);
+ }
 
 
 // =========================
