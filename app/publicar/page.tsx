@@ -112,6 +112,7 @@ async function createWhatsAppImage() {
     return;
   }
 
+
   if (calculations.totalMxn <= 0) {
     return;
   }
@@ -154,6 +155,7 @@ async function createWhatsAppImage() {
       canvas.width,
       canvas.height
     );
+
 
     // =========================
     // FOTOGRAFÍA
@@ -284,6 +286,71 @@ async function createWhatsAppImage() {
   }
 }
 
+async function shareWhatsAppImage() {
+  if (!generatedImage) {
+    return;
+  }
+
+  try {
+    const response =
+      await fetch(generatedImage);
+
+    const blob =
+      await response.blob();
+
+    const file = new File(
+      [blob],
+      `merishop-${product || "producto"}.jpg`,
+      {
+        type: "image/jpeg",
+      }
+    );
+
+    const shareData = {
+      files: [file],
+      title: "MeriShop",
+      text: `${product || "Producto"} - ${moneyMXN(
+        calculations.totalMxn
+      )}`,
+    };
+
+    if (
+      navigator.share &&
+      navigator.canShare?.(shareData)
+    ) {
+      await navigator.share(
+        shareData
+      );
+
+      return;
+    }
+
+    // Respaldo para computadora
+    const link =
+      document.createElement("a");
+
+    link.href =
+      generatedImage;
+
+    link.download =
+      `merishop-${product || "producto"}.jpg`;
+
+    document.body.appendChild(
+      link
+    );
+
+    link.click();
+
+    document.body.removeChild(
+      link
+    );
+  } catch (error) {
+    console.error(
+      "No se pudo compartir la imagen:",
+      error
+    );
+  }
+}
  
   function handlePhoto(
     file: File | null
@@ -652,6 +719,28 @@ async function createWhatsAppImage() {
     >
       📥 Guardar imagen
     </a>
+<button
+  type="button"
+  onClick={shareWhatsAppImage}
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    maxWidth: 500,
+    marginTop: 12,
+    padding: "13px 16px",
+    borderRadius: 10,
+    border: "none",
+    background: "#16a34a",
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: 800,
+    cursor: "pointer",
+  }}
+>
+  💬 Compartir / Guardar en el teléfono
+</button>
   </div>
 )}
   
