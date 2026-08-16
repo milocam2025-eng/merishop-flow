@@ -29,7 +29,8 @@ function moneyUSD(value: number) {
   });
 }
 
-const quickStores = [
+
+const defaultStores = [
   "Ross",
   "Burlington",
   "TJ Maxx",
@@ -87,6 +88,9 @@ const [publishPrice, setPublishPrice] =
 const [currentStore, setCurrentStore] =
   useState("");
 
+const [savedStores, setSavedStores] =
+  useState<string[]>(defaultStores);
+
 const [category, setCategory] =
   useState("");
 
@@ -108,6 +112,9 @@ useEffect(() => {
   const savedStore =
     localStorage.getItem("merishop_current_store");
 
+  const savedStoresJson =
+  localStorage.getItem("merishop_saved_stores");
+
   if (savedTax !== null) {
     setTaxRate(savedTax);
   }
@@ -125,6 +132,18 @@ useEffect(() => {
   }
 if (savedStore !== null) {
   setCurrentStore(savedStore);
+}
+if (savedStoresJson) {
+  try {
+    const parsedStores =
+      JSON.parse(savedStoresJson);
+
+    if (Array.isArray(parsedStores)) {
+      setSavedStores(parsedStores);
+    }
+  } catch {
+    setSavedStores(defaultStores);
+  }
 }
 }, []);
 
@@ -154,12 +173,17 @@ useEffect(() => {
     "merishop_current_store",
     currentStore
   );
+  localStorage.setItem(
+  "merishop_saved_stores",
+  JSON.stringify(savedStores)
+);
 }, [
   taxRate,
   commissionPercent,
   shippingUsd,
   exchangeRate,
   currentStore,
+  savedStores,
 ]);
 
 
@@ -217,6 +241,41 @@ const suggestedPrice = useMemo(() => {
     calculations.totalMxn / 5
   ) * 5;
 }, [calculations.totalMxn]);
+
+
+// ========================================
+// GUARDAR NUEVA TIENDA
+// ========================================
+
+function saveCurrentStore() {
+  const store =
+    currentStore.trim();
+
+  if (!store) {
+    return;
+  }
+
+  const alreadyExists =
+    savedStores.some(
+      (item) =>
+        item.toLowerCase() ===
+        store.toLowerCase()
+    );
+
+  if (alreadyExists) {
+    return;
+  }
+
+  setSavedStores([
+    ...savedStores,
+    store,
+  ]);
+}
+
+
+// ========================================
+// CREAR IMAGEN WHATSAPP
+// ========================================
 
 async function createWhatsAppImage() {
   if (!photo) {
@@ -624,6 +683,23 @@ function resetPublication() {
       fontSize: 16,
     }}
   />
+<button
+  type="button"
+  onClick={saveCurrentStore}
+  style={{
+    marginTop: 12,
+    padding: "10px 14px",
+    borderRadius: 10,
+    border: "none",
+    background: "#0f2742",
+    color: "#ffffff",
+    fontWeight: 700,
+    cursor: "pointer",
+  }}
+>
+  ➕ Guardar tienda
+</button>
+
 <div
   style={{
     display: "flex",
@@ -632,7 +708,7 @@ function resetPublication() {
     marginTop: 15,
   }}
 >
-  {quickStores.map((store) => (
+  {savedStores.map((store) => (
     <button
       key={store}
       type="button"
