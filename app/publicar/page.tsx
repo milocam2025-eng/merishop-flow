@@ -62,6 +62,9 @@ export default function PublicarPage() {
   const [exchangeRate, setExchangeRate] =
     useState("");
 
+const [publishPrice, setPublishPrice] =
+  useState("");
+
   const calculations = useMemo(() => {
     const cost =
       numberValue(costUsd);
@@ -106,6 +109,16 @@ export default function PublicarPage() {
     shippingUsd,
     exchangeRate,
   ]);
+
+const suggestedPrice = useMemo(() => {
+  if (calculations.totalMxn <= 0) {
+    return 0;
+  }
+
+  return Math.ceil(
+    calculations.totalMxn / 5
+  ) * 5;
+}, [calculations.totalMxn]);
 
 async function createWhatsAppImage() {
   if (!photo) {
@@ -253,10 +266,15 @@ async function createWhatsAppImage() {
     // PRECIO FINAL
     // =========================
 
-    const finalPrice =
-      moneyMXN(
-        calculations.totalMxn
-      );
+const priceForPublication =
+  publishPrice
+    ? Number(publishPrice)
+    : suggestedPrice;
+
+const finalPrice =
+  moneyMXN(
+    priceForPublication
+  );
 
     ctx.fillStyle = "#ffffff";
 
@@ -307,12 +325,14 @@ async function shareWhatsAppImage() {
     );
 
     const shareData = {
-      files: [file],
-      title: "MeriShop",
-      text: `${product || "Producto"} - ${moneyMXN(
-        calculations.totalMxn
-      )}`,
-    };
+  files: [file],
+  title: "MeriShop",
+  text: `${product || "Producto"} - ${moneyMXN(
+    publishPrice
+      ? Number(publishPrice)
+      : suggestedPrice
+  )}`,
+};
 
     if (
       navigator.share &&
@@ -615,6 +635,60 @@ async function shareWhatsAppImage() {
                   calculations.totalMxn
                 )}
               </div>
+<div
+  style={{
+    marginTop: 20,
+  }}
+>
+  <div
+    style={{
+      marginBottom: 8,
+      fontSize: 14,
+      opacity: 0.85,
+    }}
+  >
+    Precio sugerido:{" "}
+    <strong>
+      {moneyMXN(suggestedPrice)}
+    </strong>
+  </div>
+
+  <label
+    style={{
+      display: "block",
+      color: "#ffffff",
+      fontWeight: 700,
+    }}
+  >
+    Precio de publicación MXN
+
+    <input
+      type="number"
+      min="0"
+      step="1"
+      value={publishPrice}
+      onChange={(e) =>
+        setPublishPrice(
+          e.target.value
+        )
+      }
+      placeholder={
+        suggestedPrice > 0
+          ? String(suggestedPrice)
+          : "0"
+      }
+      style={{
+        width: "100%",
+        marginTop: 8,
+        padding: 12,
+        borderRadius: 10,
+        border: "1px solid #cbd5e1",
+        fontSize: 18,
+        fontWeight: 700,
+      }}
+    />
+  </label>
+</div>
 
               <div
                 style={{
