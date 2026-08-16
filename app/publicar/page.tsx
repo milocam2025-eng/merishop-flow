@@ -504,7 +504,7 @@ ctx.shadowOffsetY = 3;
 // MERISHOP
 ctx.textAlign = "left";
 
-ctx.fillStyle = "#ffffff";
+ctx.fillStyle = "#ed174c";
 
 ctx.font =
   "700 50px Arial";
