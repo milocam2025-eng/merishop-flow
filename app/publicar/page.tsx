@@ -441,7 +441,7 @@ async function createWhatsAppImage() {
     // FOTOGRAFÍA
     // =========================
 
-    const photoHeight = 1000;
+    const photoHeight = 1040;
 
 // Modo COVER:
 // llena completamente el área de la fotografía
@@ -492,50 +492,44 @@ ctx.restore();
     ctx.fillStyle = "#0f2742";
 
     ctx.fillRect(
-      0,
-      1000,
-      1080,
-      350
-    );
-
+  0,
+  1040,
+  1080,
+  310
+);
     // Nombre MeriShop
-    ctx.fillStyle = "#ffffff";
+ctx.fillStyle = "#ffffff";
+ctx.font = "700 34px Arial";
 
-    ctx.font =
-      "700 42px Arial";
+ctx.fillText(
+  "MeriShop",
+  55,
+  1095
+);
 
-    ctx.fillText(
-      "MeriShop",
-      60,
-      1070
-    );
-
-// Tienda actual
+// Tienda
 if (currentStore) {
   ctx.fillStyle = "#93c5fd";
-
-  ctx.font =
-    "700 26px Arial";
+  ctx.font = "700 22px Arial";
 
   ctx.fillText(
     `📍 ${currentStore.toUpperCase()}`,
-    60,
-    1115
+    55,
+    1135
   );
 }
 
-    // Producto
-    if (product) {
-      ctx.font =
-        "500 34px Arial";
+// Producto
+if (product) {
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "500 27px Arial";
 
-      ctx.fillText(
-        product,
-        60,
-        1160
-      );
-    }
-
+  ctx.fillText(
+    product,
+    55,
+    1180
+  );
+}
     // Categoría, marca y talla
 const details = [
   category,
@@ -548,18 +542,15 @@ const details = [
   .join(" • ");
 
     if (details) {
-      ctx.fillStyle =
-        "#cbd5e1";
+  ctx.fillStyle = "#cbd5e1";
+  ctx.font = "500 21px Arial";
 
-      ctx.font =
-        "500 28px Arial";
-
-      ctx.fillText(
-        details,
-        60,
-        1205
-      );
-    }
+  ctx.fillText(
+    details,
+    55,
+    1220
+  );
+}
 
     // =========================
     // PRECIO FINAL
@@ -577,14 +568,19 @@ const finalPrice =
 
     ctx.fillStyle = "#ffffff";
 
-    ctx.font =
-      "800 72px Arial";
+ctx.font =
+  "800 88px Arial";
 
-    ctx.fillText(
-      finalPrice,
-      60,
-      1305
-    );
+ctx.textAlign = "right";
+
+ctx.fillText(
+  finalPrice,
+  1025,
+  1205
+);
+
+// Regresar alineación normal
+ctx.textAlign = "left";
 
     // Crear imagen final
     const dataUrl =
