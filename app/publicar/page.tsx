@@ -38,6 +38,15 @@ const quickStores = [
   "Coach Outlet",
 ];
 
+const quickCategories = [
+  "Ropa",
+  "Calzado",
+  "Bolsas",
+  "Belleza",
+  "Accesorios",
+  "Hogar",
+];
+
 export default function PublicarPage() {
   const [photo, setPhoto] =
     useState<File | null>(null);
@@ -76,6 +85,9 @@ const [publishPrice, setPublishPrice] =
   useState("");
 
 const [currentStore, setCurrentStore] =
+  useState("");
+
+const [category, setCategory] =
   useState("");
 
 // Recuperar configuración guardada
@@ -480,6 +492,7 @@ function resetPublication() {
   setProduct("");
   setBrand("");
   setSize("");
+  setCategory("");
   setCostUsd("");
   setPublishPrice("");
 
@@ -661,6 +674,59 @@ function resetPublication() {
               <h2>
                 Producto
               </h2>
+ 	{/* CATEGORÍAS RÁPIDAS */}
+<div
+  style={{
+    marginBottom: 20,
+  }}
+>
+  <div
+    style={{
+      fontWeight: 700,
+      marginBottom: 10,
+    }}
+  >
+    Categoría
+  </div>
+
+  <div
+    style={{
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 10,
+    }}
+  >
+    {quickCategories.map((item) => (
+      <button
+        key={item}
+        type="button"
+        onClick={() =>
+          setCategory(item)
+        }
+        style={{
+          padding: "10px 14px",
+          borderRadius: 10,
+          border:
+            category === item
+              ? "2px solid #2563eb"
+              : "1px solid #cbd5e1",
+          background:
+            category === item
+              ? "#dbeafe"
+              : "#ffffff",
+          color: "#0f2742",
+          fontWeight: 700,
+          cursor: "pointer",
+        }}
+      >
+        {category === item
+          ? "✓ "
+          : ""}
+        {item}
+      </button>
+    ))}
+  </div>
+</div>
 
               <div className="form-grid">
                 <label>
