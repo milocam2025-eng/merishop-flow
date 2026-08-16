@@ -441,7 +441,7 @@ async function createWhatsAppImage() {
     // FOTOGRAFÍA
     // =========================
 
-    const photoHeight = 1040;
+    const photoHeight = 1160;
 
 // Modo COVER:
 // llena completamente el área de la fotografía
@@ -489,45 +489,38 @@ ctx.restore();
     // PANEL MERISHOP
     // =========================
 
-    ctx.fillStyle = "#0f2742";
+  ctx.fillStyle = "#0f2d4d";
 
-    ctx.fillRect(
+ctx.fillRect(
   0,
-  1040,
+  1160,
   1080,
-  310
+  190
 );
-    // Nombre MeriShop
+   // MeriShop
 ctx.fillStyle = "#ffffff";
 ctx.font = "700 34px Arial";
-
-ctx.fillText(
-  "MeriShop",
-  55,
-  1095
-);
+ctx.fillText("MeriShop", 55, 1160);
 
 // Tienda
 if (currentStore) {
   ctx.fillStyle = "#93c5fd";
-  ctx.font = "700 22px Arial";
-
+  ctx.font = "700 20px Arial";
   ctx.fillText(
     `📍 ${currentStore.toUpperCase()}`,
     55,
-    1135
+    1195
   );
 }
 
 // Producto
 if (product) {
   ctx.fillStyle = "#ffffff";
-  ctx.font = "500 27px Arial";
-
+  ctx.font = "500 25px Arial";
   ctx.fillText(
     product,
     55,
-    1180
+    1230
   );
 }
     // Categoría, marca y talla
@@ -541,17 +534,16 @@ const details = [
   .filter(Boolean)
   .join(" • ");
 
-    if (details) {
+    // Detalles
+if (details) {
   ctx.fillStyle = "#cbd5e1";
-  ctx.font = "500 21px Arial";
-
+  ctx.font = "500 19px Arial";
   ctx.fillText(
     details,
     55,
-    1220
+    1260
   );
 }
-
     // =========================
     // PRECIO FINAL
     // =========================
@@ -566,20 +558,16 @@ const finalPrice =
     priceForPublication
   );
 
-    ctx.fillStyle = "#ffffff";
-
-ctx.font =
-  "800 88px Arial";
-
+   ctx.fillStyle = "#ffffff";
+ctx.font = "800 82px Arial";
 ctx.textAlign = "right";
 
 ctx.fillText(
   finalPrice,
   1025,
-  1205
+  1235
 );
 
-// Regresar alineación normal
 ctx.textAlign = "left";
 
     // Crear imagen final
