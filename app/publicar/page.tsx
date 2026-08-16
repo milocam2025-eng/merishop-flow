@@ -303,6 +303,20 @@ async function createWhatsAppImage() {
       1070
     );
 
+// Tienda actual
+if (currentStore) {
+  ctx.fillStyle = "#93c5fd";
+
+  ctx.font =
+    "700 26px Arial";
+
+  ctx.fillText(
+    `📍 ${currentStore.toUpperCase()}`,
+    60,
+    1115
+  );
+}
+
     // Producto
     if (product) {
       ctx.font =
@@ -311,7 +325,7 @@ async function createWhatsAppImage() {
       ctx.fillText(
         product,
         60,
-        1130
+        1160
       );
     }
 
@@ -335,7 +349,7 @@ async function createWhatsAppImage() {
       ctx.fillText(
         details,
         60,
-        1185
+        1205
       );
     }
 
@@ -361,7 +375,7 @@ const finalPrice =
     ctx.fillText(
       finalPrice,
       60,
-      1285
+      1305
     );
 
     // Crear imagen final
@@ -404,11 +418,11 @@ async function shareWhatsAppImage() {
     const shareData = {
   files: [file],
   title: "MeriShop",
-  text: `${product || "Producto"} - ${moneyMXN(
-    publishPrice
-      ? Number(publishPrice)
-      : suggestedPrice
-  )}`,
+text: `${currentStore ? `${currentStore} - ` : ""}${product || "Producto"} - ${moneyMXN(
+  publishPrice
+    ? Number(publishPrice)
+    : suggestedPrice
+)}`,
 };
 
     if (
