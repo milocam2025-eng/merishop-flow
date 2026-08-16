@@ -39,7 +39,7 @@ const defaultStores = [
   "Coach Outlet",
 ];
 
-const quickCategories = [
+const defaultCategories = [
   "Ropa",
   "Calzado",
   "Bolsas",
@@ -93,6 +93,8 @@ const [savedStores, setSavedStores] =
 
 const [category, setCategory] =
   useState("");
+const [savedCategories, setSavedCategories] =
+  useState<string[]>(defaultCategories);
 
 // Recuperar configuración guardada
 useEffect(() => {
@@ -107,6 +109,9 @@ useEffect(() => {
 
   const savedExchangeRate =
     localStorage.getItem("merishop_exchange_rate");
+
+  const savedCategoriesJson =
+    localStorage.getItem("merishop_saved_categories");
 
   // 👇 NUEVO
   const savedStore =
@@ -145,10 +150,27 @@ if (savedStoresJson) {
     setSavedStores(defaultStores);
   }
 }
+if (savedCategoriesJson) {
+  try {
+    const parsedCategories =
+      JSON.parse(savedCategoriesJson);
+
+    if (Array.isArray(parsedCategories)) {
+      setSavedCategories(parsedCategories);
+    }
+  } catch {
+    setSavedCategories(defaultCategories);
+  }
+}
 }, []);
 
 // Guardar configuración automáticamente
 useEffect(() => {
+
+localStorage.setItem(
+  "merishop_saved_categories",
+  JSON.stringify(savedCategories)
+);
   localStorage.setItem(
     "merishop_tax",
     taxRate
@@ -184,6 +206,7 @@ useEffect(() => {
   exchangeRate,
   currentStore,
   savedStores,
+  savedCategories,
 ]);
 
 
@@ -300,6 +323,66 @@ function removeSavedStore(storeToRemove: string) {
   }
 }
 
+function saveCurrentCategory() {
+  const newCategory =
+    category.trim();
+
+  if (!newCategory) {
+    return;
+  }
+
+  const alreadyExists =
+    savedCategories.some(
+      (item) =>
+        item.toLowerCase() ===
+        newCategory.toLowerCase()
+    );
+
+  if (alreadyExists) {
+    return;
+  }
+
+  setSavedCategories([
+    ...savedCategories,
+    newCategory,
+  ]);
+}
+// ========================================
+// ELIMINAR CATEGORÍA PERSONALIZADA
+// ========================================
+
+function removeSavedCategory(
+  categoryToRemove: string
+) {
+  const isDefaultCategory =
+    defaultCategories.some(
+      (item) =>
+        item.toLowerCase() ===
+        categoryToRemove.toLowerCase()
+    );
+
+  if (isDefaultCategory) {
+    return;
+  }
+
+  const updatedCategories =
+    savedCategories.filter(
+      (item) =>
+        item.toLowerCase() !==
+        categoryToRemove.toLowerCase()
+    );
+
+  setSavedCategories(
+    updatedCategories
+  );
+
+  if (
+    category.toLowerCase() ===
+    categoryToRemove.toLowerCase()
+  ) {
+    setCategory("");
+  }
+}
 // ========================================
 // CREAR IMAGEN WHATSAPP
 // ========================================
@@ -830,16 +913,66 @@ function resetPublication() {
     Categoría
   </div>
 
-  <div
+<div
+  style={{
+    display: "flex",
+    gap: 10,
+    marginBottom: 15,
+    flexWrap: "wrap",
+  }}
+>
+  <input
+    type="text"
+    value={category}
+    onChange={(e) =>
+      setCategory(e.target.value)
+    }
+    placeholder="Ej. Juguetes, Electrónica..."
     style={{
-      display: "flex",
-      flexWrap: "wrap",
-      gap: 10,
+      flex: 1,
+      minWidth: 220,
+      padding: 10,
+      borderRadius: 10,
+      border: "1px solid #cbd5e1",
+      fontSize: 15,
+    }}
+  />
+
+  <button
+    type="button"
+    onClick={saveCurrentCategory}
+    style={{
+      padding: "10px 14px",
+      borderRadius: 10,
+      border: "none",
+      background: "#0f2742",
+      color: "#ffffff",
+      fontWeight: 700,
+      cursor: "pointer",
     }}
   >
-    {quickCategories.map((item) => (
+    ➕ Guardar categoría
+  </button>
+</div>
+
+ {savedCategories.map((item) => {
+  const isDefaultCategory =
+    defaultCategories.some(
+      (defaultCategory) =>
+        defaultCategory.toLowerCase() ===
+        item.toLowerCase()
+    );
+
+  return (
+    <div
+      key={item}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+      }}
+    >
       <button
-        key={item}
         type="button"
         onClick={() =>
           setCategory(item)
@@ -865,10 +998,32 @@ function resetPublication() {
           : ""}
         {item}
       </button>
-    ))}
-  </div>
-</div>
 
+      {!isDefaultCategory && (
+        <button
+          type="button"
+          onClick={() =>
+            removeSavedCategory(item)
+          }
+          title={`Eliminar ${item}`}
+          style={{
+            border: "none",
+            background: "transparent",
+            color: "#ef4444",
+            fontSize: 22,
+            fontWeight: 800,
+            cursor: "pointer",
+            padding: "4px 6px",
+            lineHeight: 1,
+          }}
+        >
+          ×
+        </button>
+      )}
+    </div>
+  );
+})}
+ </div>
               <div className="form-grid">
                 <label>
                   Producto
