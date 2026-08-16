@@ -271,7 +271,34 @@ function saveCurrentStore() {
     store,
   ]);
 }
+function removeSavedStore(storeToRemove: string) {
+  const isDefaultStore =
+    defaultStores.some(
+      (store) =>
+        store.toLowerCase() ===
+        storeToRemove.toLowerCase()
+    );
 
+  if (isDefaultStore) {
+    return;
+  }
+
+  const updatedStores =
+    savedStores.filter(
+      (store) =>
+        store.toLowerCase() !==
+        storeToRemove.toLowerCase()
+    );
+
+  setSavedStores(updatedStores);
+
+  if (
+    currentStore.toLowerCase() ===
+    storeToRemove.toLowerCase()
+  ) {
+    setCurrentStore("");
+  }
+}
 
 // ========================================
 // CREAR IMAGEN WHATSAPP
@@ -708,35 +735,74 @@ function resetPublication() {
     marginTop: 15,
   }}
 >
-  {savedStores.map((store) => (
-    <button
+  {savedStores.map((store) => {
+  const isDefaultStore =
+    defaultStores.some(
+      (defaultStore) =>
+        defaultStore.toLowerCase() ===
+        store.toLowerCase()
+    );
+
+  return (
+    <div
       key={store}
-      type="button"
-      onClick={() =>
-        setCurrentStore(store)
-      }
       style={{
-        padding: "10px 14px",
-        borderRadius: 10,
-        border:
-          currentStore === store
-            ? "2px solid #2563eb"
-            : "1px solid #cbd5e1",
-        background:
-          currentStore === store
-            ? "#dbeafe"
-            : "#ffffff",
-        color: "#0f2742",
-        fontWeight: 700,
-        cursor: "pointer",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
       }}
     >
-      {currentStore === store
-        ? "✓ "
-        : ""}
-      {store}
-    </button>
-  ))}
+      <button
+        type="button"
+        onClick={() =>
+          setCurrentStore(store)
+        }
+        style={{
+          padding: "10px 14px",
+          borderRadius: 10,
+          border:
+            currentStore === store
+              ? "2px solid #2563eb"
+              : "1px solid #cbd5e1",
+          background:
+            currentStore === store
+              ? "#dbeafe"
+              : "#ffffff",
+          color: "#0f2742",
+          fontWeight: 700,
+          cursor: "pointer",
+        }}
+      >
+        {currentStore === store
+          ? "✓ "
+          : ""}
+        {store}
+      </button>
+
+      {!isDefaultStore && (
+        <button
+          type="button"
+          onClick={() =>
+            removeSavedStore(store)
+          }
+          title={`Eliminar ${store}`}
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: "50%",
+            border: "1px solid #fecaca",
+            background: "#fff7f7",
+            color: "#dc2626",
+            fontWeight: 800,
+            cursor: "pointer",
+          }}
+        >
+          ×
+        </button>
+      )}
+    </div>
+  );
+})}
 </div>
 </div>
 
