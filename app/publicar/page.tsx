@@ -437,14 +437,14 @@ async function createWhatsAppImage() {
     );
 
 
-    // =========================
-    // FOTOGRAFÍA
-    // =========================
+// =========================
+// FOTOGRAFÍA A PANTALLA COMPLETA
+// =========================
 
-    const photoHeight = 1160;
+const photoHeight = canvas.height;
 
 // Modo COVER:
-// llena completamente el área de la fotografía
+// La fotografía cubre los 1080 x 1350 completos
 const scale = Math.max(
   canvas.width / image.width,
   photoHeight / image.height
@@ -456,22 +456,21 @@ const drawWidth =
 const drawHeight =
   image.height * scale;
 
-// Centrar la fotografía
 const x =
   (canvas.width - drawWidth) / 2;
 
 const y =
   (photoHeight - drawHeight) / 2;
 
-// Recortar únicamente lo que sobresale
 ctx.save();
 
 ctx.beginPath();
+
 ctx.rect(
   0,
   0,
   canvas.width,
-  photoHeight
+  canvas.height
 );
 
 ctx.clip();
@@ -485,45 +484,70 @@ ctx.drawImage(
 );
 
 ctx.restore();
-    // =========================
-    // PANEL MERISHOP
-    // =========================
 
-  ctx.fillStyle = "#0f2d4d";
 
-ctx.fillRect(
-  0,
-  1160,
-  1080,
-  190
-);
-   // MeriShop
+// =========================
+// INFORMACIÓN SOBRE LA FOTO
+// =========================
+
+// Sombra para que las letras sean visibles
+// sobre fotografías claras u oscuras
+ctx.shadowColor =
+  "rgba(0, 0, 0, 0.85)";
+
+ctx.shadowBlur = 10;
+
+ctx.shadowOffsetX = 2;
+ctx.shadowOffsetY = 3;
+
+
+// MERISHOP
+ctx.textAlign = "left";
+
 ctx.fillStyle = "#ffffff";
-ctx.font = "700 34px Arial";
-ctx.fillText("MeriShop", 55, 1160);
 
-// Tienda
+ctx.font =
+  "700 44px Arial";
+
+ctx.fillText(
+  "MeriShop",
+  55,
+  1110
+);
+
+
+// TIENDA
 if (currentStore) {
   ctx.fillStyle = "#93c5fd";
-  ctx.font = "700 20px Arial";
+
+  ctx.font =
+    "700 25px Arial";
+
   ctx.fillText(
     `📍 ${currentStore.toUpperCase()}`,
     55,
-    1195
+    1155
   );
 }
 
-// Producto
+
+// PRODUCTO
 if (product) {
   ctx.fillStyle = "#ffffff";
-  ctx.font = "500 25px Arial";
+
+  ctx.font =
+    "700 32px Arial";
+
   ctx.fillText(
     product,
     55,
-    1230
+    1205,
+    420
   );
 }
-    // Categoría, marca y talla
+
+
+// Categoría, marca y talla
 const details = [
   category,
   brand,
@@ -534,19 +558,26 @@ const details = [
   .filter(Boolean)
   .join(" • ");
 
-    // Detalles
+
+// DETALLES
 if (details) {
-  ctx.fillStyle = "#cbd5e1";
-  ctx.font = "500 19px Arial";
+  ctx.fillStyle = "#ffffff";
+
+  ctx.font =
+    "600 23px Arial";
+
   ctx.fillText(
     details,
     55,
-    1260
+    1250,
+    450
   );
 }
-    // =========================
-    // PRECIO FINAL
-    // =========================
+
+
+// =========================
+// PRECIO FINAL
+// =========================
 
 const priceForPublication =
   publishPrice
@@ -558,17 +589,27 @@ const finalPrice =
     priceForPublication
   );
 
-   ctx.fillStyle = "#ffffff";
-ctx.font = "800 82px Arial";
+ctx.fillStyle = "#ffffff";
+
+ctx.font =
+  "800 92px Arial";
+
 ctx.textAlign = "right";
 
 ctx.fillText(
   finalPrice,
   1025,
-  1235
+  1245
 );
 
+
+// Restablecer configuración del canvas
 ctx.textAlign = "left";
+
+ctx.shadowColor = "transparent";
+ctx.shadowBlur = 0;
+ctx.shadowOffsetX = 0;
+ctx.shadowOffsetY = 0;
 
     // Crear imagen final
     const dataUrl =
