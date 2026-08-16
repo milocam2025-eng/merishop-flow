@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+
+import { useEffect, useMemo, useState } from "react";
 
 import AppShell from "@/components/AppShell";
 import AuthGuard from "@/components/AuthGuard";
@@ -59,11 +60,87 @@ export default function PublicarPage() {
   const [shippingUsd, setShippingUsd] =
     useState("0");
 
-  const [exchangeRate, setExchangeRate] =
-    useState("");
+ const [exchangeRate, setExchangeRate] =
+  useState("");
 
 const [publishPrice, setPublishPrice] =
   useState("");
+
+const [currentStore, setCurrentStore] =
+  useState("");
+
+// Recuperar configuración guardada
+useEffect(() => {
+  const savedTax =
+    localStorage.getItem("merishop_tax");
+
+  const savedCommission =
+    localStorage.getItem("merishop_commission");
+
+  const savedShipping =
+    localStorage.getItem("merishop_shipping");
+
+  const savedExchangeRate =
+    localStorage.getItem("merishop_exchange_rate");
+
+  // 👇 NUEVO
+  const savedStore =
+    localStorage.getItem("merishop_current_store");
+
+  if (savedTax !== null) {
+    setTaxRate(savedTax);
+  }
+
+  if (savedCommission !== null) {
+    setCommissionPercent(savedCommission);
+  }
+
+  if (savedShipping !== null) {
+    setShippingUsd(savedShipping);
+  }
+
+  if (savedExchangeRate !== null) {
+    setExchangeRate(savedExchangeRate);
+  }
+if (savedStore !== null) {
+  setCurrentStore(savedStore);
+}
+}, []);
+
+// Guardar configuración automáticamente
+useEffect(() => {
+  localStorage.setItem(
+    "merishop_tax",
+    taxRate
+  );
+
+  localStorage.setItem(
+    "merishop_commission",
+    commissionPercent
+  );
+
+  localStorage.setItem(
+    "merishop_shipping",
+    shippingUsd
+  );
+
+  localStorage.setItem(
+    "merishop_exchange_rate",
+    exchangeRate
+  );
+
+  localStorage.setItem(
+    "merishop_current_store",
+    currentStore
+  );
+}, [
+  taxRate,
+  commissionPercent,
+  shippingUsd,
+  exchangeRate,
+  currentStore,
+]);
+
 
   const calculations = useMemo(() => {
     const cost =
@@ -472,6 +549,45 @@ function resetPublication() {
                 </div>
               )}
             </div>
+
+{/* TIENDA ACTUAL */}
+
+<div
+  className="panel"
+  style={{
+    marginBottom: 25,
+  }}
+>
+  <h2>
+    🏬 Tienda actual
+  </h2>
+
+  <p
+    style={{
+      color: "#64748b",
+      marginBottom: 15,
+    }}
+  >
+    Esta tienda se conservará para tus
+    siguientes publicaciones.
+  </p>
+
+  <input
+    type="text"
+    value={currentStore}
+    onChange={(e) =>
+      setCurrentStore(e.target.value)
+    }
+    placeholder="Ej. Ross, Burlington, TJ Maxx..."
+    style={{
+      width: "100%",
+      padding: 12,
+      borderRadius: 10,
+      border: "1px solid #cbd5e1",
+      fontSize: 16,
+    }}
+  />
+</div>
 
             {/* PRODUCTO */}
 
