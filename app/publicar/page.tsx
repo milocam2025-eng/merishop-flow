@@ -29,6 +29,15 @@ function moneyUSD(value: number) {
   });
 }
 
+const quickStores = [
+  "Ross",
+  "Burlington",
+  "TJ Maxx",
+  "Marshalls",
+  "Nordstrom Rack",
+  "Coach Outlet",
+];
+
 export default function PublicarPage() {
   const [photo, setPhoto] =
     useState<File | null>(null);
@@ -601,6 +610,44 @@ function resetPublication() {
       fontSize: 16,
     }}
   />
+<div
+  style={{
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 15,
+  }}
+>
+  {quickStores.map((store) => (
+    <button
+      key={store}
+      type="button"
+      onClick={() =>
+        setCurrentStore(store)
+      }
+      style={{
+        padding: "10px 14px",
+        borderRadius: 10,
+        border:
+          currentStore === store
+            ? "2px solid #2563eb"
+            : "1px solid #cbd5e1",
+        background:
+          currentStore === store
+            ? "#dbeafe"
+            : "#ffffff",
+        color: "#0f2742",
+        fontWeight: 700,
+        cursor: "pointer",
+      }}
+    >
+      {currentStore === store
+        ? "✓ "
+        : ""}
+      {store}
+    </button>
+  ))}
+</div>
 </div>
 
             {/* PRODUCTO */}
