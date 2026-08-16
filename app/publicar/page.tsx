@@ -350,15 +350,16 @@ if (currentStore) {
       );
     }
 
-    // Marca y talla
-    const details = [
-      brand,
-      size
-        ? `Talla ${size}`
-        : "",
-    ]
-      .filter(Boolean)
-      .join(" • ");
+    // Categoría, marca y talla
+const details = [
+  category,
+  brand,
+  size
+    ? `Talla ${size}`
+    : "",
+]
+  .filter(Boolean)
+  .join(" • ");
 
     if (details) {
       ctx.fillStyle =
