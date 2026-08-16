@@ -781,24 +781,22 @@ function resetPublication() {
 
       {!isDefaultStore && (
         <button
-          type="button"
-          onClick={() =>
-            removeSavedStore(store)
-          }
-          title={`Eliminar ${store}`}
-          style={{
-            width: 30,
-            height: 30,
-            borderRadius: "50%",
-            border: "1px solid #fecaca",
-            background: "#fff7f7",
-            color: "#dc2626",
-            fontWeight: 800,
-            cursor: "pointer",
-          }}
-        >
-          ×
-        </button>
+  type="button"
+ onClick={() => removeSavedStore(store)}
+  title={`Eliminar ${store}`}
+  style={{
+    border: "none",
+    background: "transparent",
+    color: "#ef4444",
+    fontSize: 22,
+    fontWeight: 800,
+    cursor: "pointer",
+    padding: "4px 6px",
+    lineHeight: 1,
+  }}
+>
+  ×
+</button>
       )}
     </div>
   );
