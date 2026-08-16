@@ -372,6 +372,23 @@ async function shareWhatsAppImage() {
   }
 }
  
+function resetPublication() {
+  setPhoto(null);
+  setPreviewUrl(null);
+  setGeneratedImage(null);
+
+  setProduct("");
+  setBrand("");
+  setSize("");
+  setCostUsd("");
+  setPublishPrice("");
+
+  // Conservamos estos valores:
+  // taxRate
+  // commissionPercent
+  // shippingUsd
+  // exchangeRate
+}
   function handlePhoto(
     file: File | null
   ) {
@@ -812,12 +829,36 @@ async function shareWhatsAppImage() {
     fontWeight: 800,
     cursor: "pointer",
   }}
+
 >
   💬 Compartir / Guardar en el teléfono
 </button>
+
+<button
+  type="button"
+  onClick={resetPublication}
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    maxWidth: 500,
+    marginTop: 12,
+    padding: "13px 16px",
+    borderRadius: 10,
+    border: "1px solid #cbd5e1",
+    background: "#ffffff",
+    color: "#0f2742",
+    fontSize: 16,
+    fontWeight: 800,
+    cursor: "pointer",
+  }}
+>
+  ⚡ Nueva publicación
+</button>
+
   </div>
-)}
-  
+)}  
           </div>
         </section>
       </AppShell>
