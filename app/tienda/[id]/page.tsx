@@ -1,0 +1,378 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+
+type Product = {
+  id: string;
+  product: string;
+  brand: string | null;
+  category: string | null;
+  size: string | null;
+  image_url: string | null;
+  sale_price_mxn: number | null;
+  quantity: number | null;
+  status: string | null;
+};
+
+function money(value: number | null) {
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+  }).format(Number(value ?? 0));
+}
+
+export default function ProductPage() {
+  const params = useParams();
+  const id = params.id as string;
+
+  const [product, setProduct] =
+    useState<Product | null>(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  useEffect(() => {
+    async function loadProduct() {
+      const supabase = createClient();
+
+      const { data, error } = await supabase
+        .from("inventory")
+        .select(`
+          id,
+          product,
+          brand,
+          category,
+          size,
+          image_url,
+          sale_price_mxn,
+          quantity,
+          status
+        `)
+        .eq("id", id)
+        .single();
+
+      if (error) {
+        console.error(error);
+        setError(
+          "No pudimos encontrar este producto."
+        );
+        setLoading(false);
+        return;
+      }
+
+      setProduct(data as Product);
+      setLoading(false);
+    }
+
+    if (id) {
+      loadProduct();
+    }
+  }, [id]);
+
+  function buyWhatsApp() {
+    if (!product) return;
+
+    const whatsappNumber =
+      "18402792847";
+
+    const message = [
+      "Hola MeriShop",
+      "",
+      "Me interesa este producto:",
+      "",
+      `Producto: ${product.product}`,
+      product.brand
+        ? `Marca: ${product.brand}`
+        : "",
+      product.size
+        ? `Talla: ${product.size}`
+        : "",
+      `Precio: ${money(
+        product.sale_price_mxn
+      )}`,
+      "",
+      "¿Está disponible?",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const url =
+      `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+        message
+      )}`;
+
+    window.open(
+      url,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
+
+  if (loading) {
+    return (
+      <main style={styles.center}>
+        <h2>Cargando producto...</h2>
+      </main>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <main style={styles.center}>
+        <h2>{error}</h2>
+
+        <Link
+          href="/tienda"
+          style={styles.backButton}
+        >
+          ← Volver a la tienda
+        </Link>
+      </main>
+    );
+  }
+
+  const available =
+    Number(product.quantity ?? 0) > 0 &&
+    product.status !== "Vendido" &&
+    product.status !== "Agotado";
+
+  return (
+    <main style={styles.page}>
+      <div style={styles.container}>
+
+        <Link
+          href="/tienda"
+          style={styles.back}
+        >
+          ← Volver a MeriShop
+        </Link>
+
+        <div style={styles.card}>
+
+          <div style={styles.imageArea}>
+            {product.image_url ? (
+              <img
+                src={product.image_url}
+                alt={product.product}
+                style={styles.image}
+              />
+            ) : (
+              <div style={styles.noImage}>
+                Sin fotografía
+              </div>
+            )}
+          </div>
+
+          <div style={styles.info}>
+
+            {product.category && (
+              <div style={styles.category}>
+                {product.category}
+              </div>
+            )}
+
+            <h1 style={styles.title}>
+              {product.product}
+            </h1>
+
+            {product.brand && (
+              <div style={styles.brand}>
+                {product.brand}
+              </div>
+            )}
+
+            {product.size && (
+              <div style={styles.detail}>
+                Talla:{" "}
+                <strong>
+                  {product.size}
+                </strong>
+              </div>
+            )}
+
+            <div style={styles.price}>
+              {money(
+                product.sale_price_mxn
+              )}
+            </div>
+
+            <div
+              style={{
+                ...styles.status,
+                ...(available
+                  ? styles.available
+                  : styles.unavailable),
+              }}
+            >
+              {available
+                ? "✓ Disponible"
+                : "Agotado"}
+            </div>
+
+            {available && (
+              <button
+                type="button"
+                onClick={buyWhatsApp}
+                style={styles.whatsapp}
+              >
+                Comprar por WhatsApp
+              </button>
+            )}
+
+            <div style={styles.note}>
+              Compra segura directamente
+              con MeriShop.
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+const styles: Record<string, React.CSSProperties> = {
+  page: {
+    minHeight: "100vh",
+    background: "#f5f7fb",
+    padding: "40px 20px",
+  },
+
+  container: {
+    maxWidth: "1100px",
+    margin: "0 auto",
+  },
+
+  back: {
+    display: "inline-block",
+    marginBottom: "24px",
+    color: "#12385d",
+    textDecoration: "none",
+    fontWeight: 700,
+  },
+
+  card: {
+    display: "grid",
+    gridTemplateColumns:
+      "minmax(0, 1fr) minmax(0, 1fr)",
+    background: "#ffffff",
+    borderRadius: "24px",
+    overflow: "hidden",
+    boxShadow:
+      "0 12px 40px rgba(0,0,0,0.08)",
+  },
+
+  imageArea: {
+    background: "#f0f2f5",
+    minHeight: "500px",
+  },
+
+  image: {
+    width: "100%",
+    height: "100%",
+    minHeight: "500px",
+    objectFit: "cover",
+    display: "block",
+  },
+
+  noImage: {
+    minHeight: "500px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#718096",
+  },
+
+  info: {
+    padding: "50px",
+  },
+
+  category: {
+    color: "#718096",
+    fontSize: "16px",
+    marginBottom: "10px",
+  },
+
+  title: {
+    color: "#172b4d",
+    fontSize: "38px",
+    margin: "0 0 10px",
+  },
+
+  brand: {
+    color: "#52657a",
+    fontSize: "21px",
+    fontWeight: 600,
+    marginBottom: "24px",
+  },
+
+  detail: {
+    color: "#334e68",
+    fontSize: "18px",
+    marginBottom: "20px",
+  },
+
+  price: {
+    color: "#172b4d",
+    fontSize: "40px",
+    fontWeight: 800,
+    marginBottom: "20px",
+  },
+
+  status: {
+    display: "inline-block",
+    padding: "9px 16px",
+    borderRadius: "999px",
+    fontWeight: 700,
+    marginBottom: "30px",
+  },
+
+  available: {
+    background: "#dcfce7",
+    color: "#166534",
+  },
+
+  unavailable: {
+    background: "#fee2e2",
+    color: "#991b1b",
+  },
+
+  whatsapp: {
+    width: "100%",
+    border: "none",
+    borderRadius: "14px",
+    padding: "17px",
+    background: "#16a34a",
+    color: "#ffffff",
+    fontSize: "18px",
+    fontWeight: 800,
+    cursor: "pointer",
+    marginBottom: "18px",
+  },
+
+  note: {
+    color: "#718096",
+    textAlign: "center",
+    fontSize: "14px",
+  },
+
+  center: {
+    minHeight: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "20px",
+  },
+
+  backButton: {
+    color: "#12385d",
+    fontWeight: 700,
+  },
+};

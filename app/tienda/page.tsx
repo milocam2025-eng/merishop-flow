@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 type StoreProduct = {
   id: string;
@@ -527,33 +528,54 @@ const url =
                     ✓ Disponible
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      buyProduct(
-                        item
-                      )
-                    }
-                    style={{
-                      width:
-                        "100%",
-                      padding: 14,
-                      border: 0,
-                      borderRadius:
-                        12,
-                      background:
-                        "#16a34a",
-                      color:
-                        "#ffffff",
-                      fontSize: 16,
-                      fontWeight: 800,
-                      cursor:
-                        "pointer",
-                    }}
-                  >
+                 <div
+  style={{
+    display: "grid",
+    gap: 10,
+  }}
+>
+  <Link
+    href={`/tienda/${item.id}`}
+    style={{
+      width: "100%",
+      padding: 14,
+      borderRadius: 12,
+      background: "#0f2d4d",
+      color: "#ffffff",
+      fontSize: 16,
+      fontWeight: 800,
+      textAlign: "center",
+      textDecoration: "none",
+      boxSizing: "border-box",
+      display: "block",
+    }}
+  >
+    👁 Ver producto
+  </Link>
+
+  <button
+    type="button"
+    onClick={() =>
+      buyProduct(
+        item
+      )
+    }
+    style={{
+      width: "100%",
+      padding: 14,
+      border: 0,
+      borderRadius: 12,
+      background: "#16a34a",
+      color: "#ffffff",
+      fontSize: 16,
+      fontWeight: 800,
+      cursor: "pointer",
+    }}
+  >
                     💬 Quiero comprar
                   </button>
                 </div>
+</div>
               </article>
             )
           )}
