@@ -500,7 +500,6 @@ ctx.shadowBlur = 10;
 ctx.shadowOffsetX = 2;
 ctx.shadowOffsetY = 3;
 
-
 // MERISHOP
 ctx.textAlign = "left";
 
@@ -512,7 +511,7 @@ ctx.font =
 ctx.fillText(
   "MeriShop",
   55,
-  1080
+  1075
 );
 
 // TIENDA
@@ -525,7 +524,7 @@ ctx.font =
 ctx.fillText(
   `📍 ${currentStore.toUpperCase()}`,
   55,
-  1130
+  1115
 );
 }
 
@@ -540,7 +539,7 @@ ctx.font =
 ctx.fillText(
   product,
   55,
-  1185,
+  1160,
   440
 );
 }
@@ -568,7 +567,7 @@ ctx.font =
 ctx.fillText(
   details,
   55,
-  1235,
+  1200,
   480
 );
  }
@@ -598,7 +597,7 @@ ctx.textAlign = "right";
 ctx.fillText(
   finalPrice,
   1025,
-  1245
+  1170
 );
 
 
