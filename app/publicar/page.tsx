@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import AuthGuard from "@/components/AuthGuard";
 import CameraPicker from "@/components/CameraPicker";
+import { createClient } from "@/lib/supabase/client";
 
 function numberValue(value: string) {
   const number = Number(value);
@@ -95,6 +96,28 @@ const [category, setCategory] =
   useState("");
 const [savedCategories, setSavedCategories] =
   useState<string[]>(defaultCategories);
+type InventoryProduct = {
+  id: string;
+  product: string;
+  brand?: string | null;
+  category?: string | null;
+  size?: string | null;
+  image_url?: string | null;
+  store?: string | null;
+
+  cost_usd?: number | null;
+  tax_rate?: number | null;
+  shipping_usd?: number | null;
+  commission_percent?: number | null;
+  exchange_rate?: number | null;
+  sale_price_mxn?: number | null;
+};
+
+const [inventoryProducts, setInventoryProducts] =
+  useState<InventoryProduct[]>([]);
+
+const [selectedInventoryId, setSelectedInventoryId] =
+  useState("");
 
 // Recuperar configuración guardada
 useEffect(() => {
@@ -162,6 +185,52 @@ if (savedCategoriesJson) {
     setSavedCategories(defaultCategories);
   }
 }
+}, []);
+
+
+// ========================================
+// CARGAR PRODUCTOS DEL INVENTARIO
+// ========================================
+
+useEffect(() => {
+  async function loadInventoryProducts() {
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+      .from("inventory")
+      .select(`
+        id,
+        product,
+        brand,
+        category,
+        size,
+        image_url,
+        store,
+        cost_usd,
+        tax_rate,
+        shipping_usd,
+        commission_percent,
+        exchange_rate,
+        sale_price_mxn
+      `)
+      .order("created_at", {
+        ascending: false,
+      });
+
+    if (error) {
+      console.error(
+        "Error cargando inventario:",
+        error
+      );
+      return;
+    }
+
+    setInventoryProducts(
+      (data as InventoryProduct[]) ?? []
+    );
+  }
+
+  loadInventoryProducts();
 }, []);
 
 // Guardar configuración automáticamente
@@ -822,6 +891,132 @@ function resetPublication() {
               en pesos y prepara el
               producto para compartir.
             </p>
+
+{/* PRODUCTO DEL INVENTARIO */}
+
+<div
+  className="panel"
+  style={{
+    marginBottom: 25,
+  }}
+>
+  <h2>
+    📦 Producto del inventario
+  </h2>
+
+  <p
+    style={{
+      color: "#64748b",
+      marginBottom: 15,
+    }}
+  >
+    Selecciona un producto guardado para cargar sus datos automáticamente.
+  </p>
+
+  <select
+    value={selectedInventoryId}
+
+onChange={(e) => {
+  const id = e.target.value;
+
+  setSelectedInventoryId(id);
+
+  const selected =
+    inventoryProducts.find(
+      (item) => item.id === id
+    );
+
+  if (!selected) {
+    return;
+  }
+
+  setProduct(
+    selected.product || ""
+  );
+
+  setBrand(
+    selected.brand || ""
+  );
+
+  setCategory(
+    selected.category || ""
+  );
+
+  setSize(
+    selected.size || ""
+  );
+
+  setCurrentStore(
+    selected.store || ""
+  );
+
+  setCostUsd(
+    selected.cost_usd != null
+      ? String(selected.cost_usd)
+      : ""
+  );
+
+  setTaxRate(
+    selected.tax_rate != null
+      ? String(selected.tax_rate)
+      : taxRate
+  );
+
+  setShippingUsd(
+    selected.shipping_usd != null
+      ? String(selected.shipping_usd)
+      : shippingUsd
+  );
+
+  setCommissionPercent(
+    selected.commission_percent != null
+      ? String(selected.commission_percent)
+      : commissionPercent
+  );
+
+  setExchangeRate(
+    selected.exchange_rate != null
+      ? String(selected.exchange_rate)
+      : exchangeRate
+  );
+
+  setPublishPrice(
+    selected.sale_price_mxn != null
+      ? String(selected.sale_price_mxn)
+      : ""
+  );
+}}	    
+    style={{
+      width: "100%",
+      padding: 12,
+      borderRadius: 10,
+      border: "1px solid #cbd5e1",
+      fontSize: 16,
+      background: "#ffffff",
+    }}
+  >
+    <option value="">
+      Seleccionar producto...
+    </option>
+
+    {inventoryProducts.map((item) => (
+      <option
+        key={item.id}
+        value={item.id}
+      >
+        {item.product}
+        {item.brand
+          ? ` - ${item.brand}`
+          : ""}
+        {item.size
+          ? ` - Talla ${item.size}`
+          : ""}
+      </option>
+    ))}
+  </select>
+</div>
+
+{/* FOTO */}
 
             {/* FOTO */}
 
