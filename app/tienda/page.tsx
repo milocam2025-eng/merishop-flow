@@ -189,11 +189,13 @@ export default function TiendaPage() {
       .filter(Boolean)
       .join("\n");
 
-    const url =
-      `https://wa.me/?text=${encodeURIComponent(
-        message
-      )}`;
+const whatsappNumber = "18402792847";
 
+const url =
+  `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+    message
+  )}`;
+    
     window.open(
       url,
       "_blank"
