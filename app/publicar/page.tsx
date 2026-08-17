@@ -597,7 +597,7 @@ ctx.textAlign = "right";
 ctx.fillText(
   finalPrice,
   1025,
-  1170
+  1125
 );
 
 
