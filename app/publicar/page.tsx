@@ -916,7 +916,7 @@ function resetPublication() {
   <select
     value={selectedInventoryId}
 
-onChange={(e) => {
+onChange={async (e) => {
   const id = e.target.value;
 
   setSelectedInventoryId(id);
@@ -929,7 +929,37 @@ onChange={(e) => {
   if (!selected) {
     return;
   }
+if (selected.image_url) {
+  try {
+    const imageResponse =
+      await fetch(selected.image_url);
 
+    const imageBlob =
+      await imageResponse.blob();
+
+    const imageFile =
+      new File(
+        [imageBlob],
+        `inventory-${selected.id}.jpg`,
+        {
+          type:
+            imageBlob.type ||
+            "image/jpeg",
+        }
+      );
+
+    setPhoto(imageFile);
+
+    setPreviewUrl(
+      selected.image_url
+    );
+  } catch (error) {
+    console.error(
+      "No se pudo cargar la foto del inventario:",
+      error
+    );
+  }
+}
   setProduct(
     selected.product || ""
   );
