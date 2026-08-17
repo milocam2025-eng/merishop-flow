@@ -49,91 +49,99 @@ const [selectedImage, setSelectedImage] =
     useState("");
 
   useEffect(() => {
-    async function loadProduct() {
-      const supabase = createClient();
+  async function loadProduct() {
+    const supabase = createClient();
 
-      const { data, error } = await supabase
-        .from("inventory")
-        .select(`
-          id,
-          product,
-          brand,
-          category,
-          size,
-          image_url,
-          sale_price_mxn,
-          quantity,
-          status
-        `)
-        .eq("id", id)
-        .single();
+    const { data, error } = await supabase
+      .from("inventory")
+      .select(`
+        id,
+        product,
+        brand,
+        category,
+        size,
+        image_url,
+        sale_price_mxn,
+        quantity,
+        status
+      `)
+      .eq("id", id)
+      .single();
 
- if (error) {
-        console.error(error);
-        setError(
-          "No pudimos encontrar este producto."
-        );
-        setLoading(false);
-        return;
-      }
-setProduct(data as Product);
+    if (error) {
+      console.error(error);
 
-// ========================================
-// CARGAR GALERÍA DE FOTOS
-// ========================================
+      setError(
+        "No pudimos encontrar este producto."
+      );
 
-
-
-const { data: imageData, error: imageError } =
-  await supabase
-    .from("inventory_images")
-    .select(`
-      id,
-      image_url,
-      sort_order,
-      is_primary
-    `)
-    .eq("inventory_id", id)
-    .order("sort_order", {
-      ascending: true,
-    });
-
-if (imageError) {
-  console.error(
-    "Error cargando galería:",
-    imageError
-  );
-} else {
-  const gallery =
-    (imageData as ProductImage[]) ?? [];
-
-  setImages(gallery);
-
-  if (gallery.length > 0) {
-    const primary =
-      gallery.find(
-        (image) => image.is_primary
-      ) ?? gallery[0];
-
-    setSelectedImage(
-      primary.image_url
-    );
-  } else if (data.image_url) {
-    setSelectedImage(
-      data.image_url
-    );
-  }
-}
-
-
-      setProduct(data as Product);
       setLoading(false);
+      return;
     }
 
-    if (id) {
-      loadProduct();
+    setProduct(data as Product);
+
+    // ========================================
+    // CARGAR GALERÍA DE FOTOS
+    // ========================================
+
+    const {
+      data: imageData,
+      error: imageError,
+    } = await supabase
+      .from("inventory_images")
+      .select(`
+        id,
+        image_url,
+        sort_order,
+        is_primary
+      `)
+      .eq("inventory_id", id)
+      .order("sort_order", {
+        ascending: true,
+      });
+
+    if (imageError) {
+      console.error(
+        "Error cargando galería:",
+        imageError
+      );
+
+      if (data.image_url) {
+        setSelectedImage(
+          data.image_url
+        );
+      }
+    } else {
+      const gallery =
+        (imageData as ProductImage[]) ?? [];
+
+      setImages(gallery);
+
+      if (gallery.length > 0) {
+        const primary =
+          gallery.find(
+            (image) =>
+              image.is_primary
+          ) ?? gallery[0];
+
+        setSelectedImage(
+          primary.image_url
+        );
+      } else if (data.image_url) {
+        setSelectedImage(
+          data.image_url
+        );
+      }
     }
-  }, [id]);
+
+    setLoading(false);
+  }
+
+  if (id) {
+    loadProduct();
+  }
+}, [id]);
 
   function buyWhatsApp() {
     if (!product) return;
@@ -379,18 +387,18 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   imageArea: {
-    background: "#f0f2f5",
-    minHeight: "500px",
-  },
+  background: "#f0f2f5",
+  display: "flex",
+  flexDirection: "column",
+},
 
   image: {
-    width: "100%",
-    height: "100%",
-    minHeight: "500px",
-    objectFit: "cover",
-    display: "block",
-  },
-
+  width: "100%",
+  height: "620px",
+  objectFit: "contain",
+  display: "block",
+  background: "#ffffff",
+},
   noImage: {
     minHeight: "500px",
     display: "flex",
