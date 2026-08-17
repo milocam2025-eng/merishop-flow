@@ -504,12 +504,12 @@ gradient.addColorStop(
 
 gradient.addColorStop(
   0.55,
-  "rgba(0, 0, 0, 0.18)"
+  "rgba(0, 0, 0, 0.10)"
 );
 
 gradient.addColorStop(
   1,
-  "rgba(0, 0, 0, 0.55)"
+  "rgba(0, 0, 0, 0.38)"
 );
 
 ctx.fillStyle = gradient;
