@@ -485,6 +485,41 @@ ctx.drawImage(
 
 ctx.restore();
 
+// =========================
+// DEGRADADO INFERIOR SUAVE
+// =========================
+
+const gradient =
+  ctx.createLinearGradient(
+    0,
+    canvas.height - 360,
+    0,
+    canvas.height
+  );
+
+gradient.addColorStop(
+  0,
+  "rgba(0, 0, 0, 0)"
+);
+
+gradient.addColorStop(
+  0.55,
+  "rgba(0, 0, 0, 0.18)"
+);
+
+gradient.addColorStop(
+  1,
+  "rgba(0, 0, 0, 0.55)"
+);
+
+ctx.fillStyle = gradient;
+
+ctx.fillRect(
+  0,
+  canvas.height - 360,
+  canvas.width,
+  360
+);
 
 // =========================
 // INFORMACIÓN SOBRE LA FOTO
