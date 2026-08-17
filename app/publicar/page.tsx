@@ -647,16 +647,50 @@ async function shareWhatsAppImage() {
       }
     );
 
-    const shareData = {
-  files: [file],
-  title: "MeriShop",
-text: `${currentStore ? `${currentStore} - ` : ""}${product || "Producto"} - ${moneyMXN(
+  const priceForShare =
   publishPrice
     ? Number(publishPrice)
-    : suggestedPrice
-)}`,
-};
+    : suggestedPrice;
 
+const messageLines = [
+  "🛍️ MeriShop",
+  "",
+  currentStore
+    ? `📍 ${currentStore.toUpperCase()}`
+    : "",
+  product
+    ? `👕 ${product}`
+    : "",
+  brand
+    ? `🏷️ ${brand}`
+    : "",
+  size
+    ? `📏 Talla ${size}`
+    : "",
+  "",
+  `💰 ${moneyMXN(priceForShare)} MXN`,
+  "",
+  "✨ Disponible por tiempo limitado",
+  "📲 Envíame mensaje para apartar",
+];
+
+const shareText =
+  messageLines
+    .filter((line, index, array) => {
+      if (line !== "") return true;
+
+      return (
+        index > 0 &&
+        array[index - 1] !== ""
+      );
+    })
+    .join("\n");
+
+const shareData = {
+  files: [file],
+  title: "MeriShop",
+  text: shareText,
+};
     if (
       navigator.share &&
       navigator.canShare?.(shareData)
