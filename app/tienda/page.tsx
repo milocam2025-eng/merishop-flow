@@ -168,27 +168,26 @@ export default function TiendaPage() {
   function buyProduct(
     item: StoreProduct
   ) {
-    const message = [
-      "Hola MeriShop 👋",
-      "",
-      "Me interesa este producto:",
-      "",
-      `🛍️ ${item.product}`,
-      item.brand
-        ? `🏷️ ${item.brand}`
-        : "",
-      item.size
-        ? `📏 Talla ${item.size}`
-        : "",
-      `💰 ${money(
-        item.sale_price_mxn
-      )}`,
-      "",
-      "¿Está disponible?",
-    ]
-      .filter(Boolean)
-      .join("\n");
-
+   const message = [
+  "Hola MeriShop",
+  "",
+  "Me interesa este producto:",
+  "",
+  `Producto: ${item.product}`,
+  item.brand
+    ? `Marca: ${item.brand}`
+    : "",
+  item.size
+    ? `Talla: ${item.size}`
+    : "",
+  `Precio: ${money(
+    item.sale_price_mxn
+  )} MXN`,
+  "",
+  "¿Está disponible?",
+]
+  .filter(Boolean)
+  .join("\n");
 const whatsappNumber = "18402792847";
 
 const url =
