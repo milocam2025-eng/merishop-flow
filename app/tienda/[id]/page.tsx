@@ -16,7 +16,12 @@ type Product = {
   quantity: number | null;
   status: string | null;
 };
-
+type ProductImage = {
+  id: string;
+  image_url: string;
+  sort_order: number;
+  is_primary: boolean;
+};
 function money(value: number | null) {
   return new Intl.NumberFormat("es-MX", {
     style: "currency",
@@ -30,6 +35,12 @@ export default function ProductPage() {
 
   const [product, setProduct] =
     useState<Product | null>(null);
+
+const [images, setImages] =
+  useState<ProductImage[]>([]);
+
+const [selectedImage, setSelectedImage] =
+  useState("");
 
   const [loading, setLoading] =
     useState(true);
@@ -57,7 +68,7 @@ export default function ProductPage() {
         .eq("id", id)
         .single();
 
-      if (error) {
+ if (error) {
         console.error(error);
         setError(
           "No pudimos encontrar este producto."
@@ -65,6 +76,55 @@ export default function ProductPage() {
         setLoading(false);
         return;
       }
+setProduct(data as Product);
+
+// ========================================
+// CARGAR GALERÍA DE FOTOS
+// ========================================
+
+
+
+const { data: imageData, error: imageError } =
+  await supabase
+    .from("inventory_images")
+    .select(`
+      id,
+      image_url,
+      sort_order,
+      is_primary
+    `)
+    .eq("inventory_id", id)
+    .order("sort_order", {
+      ascending: true,
+    });
+
+if (imageError) {
+  console.error(
+    "Error cargando galería:",
+    imageError
+  );
+} else {
+  const gallery =
+    (imageData as ProductImage[]) ?? [];
+
+  setImages(gallery);
+
+  if (gallery.length > 0) {
+    const primary =
+      gallery.find(
+        (image) => image.is_primary
+      ) ?? gallery[0];
+
+    setSelectedImage(
+      primary.image_url
+    );
+  } else if (data.image_url) {
+    setSelectedImage(
+      data.image_url
+    );
+  }
+}
+
 
       setProduct(data as Product);
       setLoading(false);
@@ -156,17 +216,67 @@ export default function ProductPage() {
         <div style={styles.card}>
 
           <div style={styles.imageArea}>
-            {product.image_url ? (
-              <img
-                src={product.image_url}
-                alt={product.product}
-                style={styles.image}
-              />
-            ) : (
-              <div style={styles.noImage}>
-                Sin fotografía
-              </div>
-            )}
+           
+{selectedImage ? (
+  <>
+    <img
+      src={selectedImage}
+      alt={product.product}
+      style={styles.image}
+    />
+
+    {images.length > 1 && (
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(80px, 1fr))",
+          gap: 10,
+          padding: 15,
+          background: "#ffffff",
+        }}
+      >
+        {images.map((image) => (
+          <button
+            key={image.id}
+            type="button"
+            onClick={() =>
+              setSelectedImage(
+                image.image_url
+              )
+            }
+            style={{
+              padding: 0,
+              border:
+                selectedImage === image.image_url
+                  ? "3px solid #ed174c"
+                  : "1px solid #cbd5e1",
+              borderRadius: 10,
+              overflow: "hidden",
+              cursor: "pointer",
+              background: "#ffffff",
+            }}
+          >
+            <img
+              src={image.image_url}
+              alt={product.product}
+              style={{
+                width: "100%",
+                height: 90,
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+          </button>
+        ))}
+      </div>
+    )}
+  </>
+) : (
+  <div style={styles.noImage}>
+    Sin fotografía
+  </div>
+)}
           </div>
 
           <div style={styles.info}>
