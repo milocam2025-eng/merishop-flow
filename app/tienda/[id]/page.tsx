@@ -11,6 +11,7 @@ type Product = {
   brand: string | null;
   category: string | null;
   size: string | null;
+  color: string | null;
   image_url: string | null;
   sale_price_mxn: number | null;
   quantity: number | null;
@@ -60,6 +61,7 @@ const [selectedImage, setSelectedImage] =
         brand,
         category,
         size,
+        color,  
         image_url,
         sale_price_mxn,
         quantity,
@@ -339,6 +341,125 @@ const [selectedImage, setSelectedImage] =
                 onClick={buyWhatsApp}
                 style={styles.whatsapp}
               >
+<div
+  style={{
+    marginBottom: 28,
+    padding: 20,
+    borderRadius: 16,
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
+  }}
+>
+  <h3
+    style={{
+      margin: "0 0 16px",
+      color: "#172b4d",
+      fontSize: 18,
+    }}
+  >
+    Detalles del producto
+  </h3>
+
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns:
+        "repeat(2, minmax(0, 1fr))",
+      gap: 14,
+      color: "#475569",
+    }}
+  >
+    {product.category && (
+      <div>
+        <div
+          style={{
+            fontSize: 13,
+            color: "#94a3b8",
+          }}
+        >
+          Categoría
+        </div>
+
+        <strong>
+          {product.category}
+        </strong>
+      </div>
+    )}
+
+    {product.brand && (
+      <div>
+        <div
+          style={{
+            fontSize: 13,
+            color: "#94a3b8",
+          }}
+        >
+          Marca
+        </div>
+
+        <strong>
+          {product.brand}
+        </strong>
+      </div>
+    )}
+
+    {product.size && (
+      <div>
+        <div
+          style={{
+            fontSize: 13,
+            color: "#94a3b8",
+          }}
+        >
+          Talla
+        </div>
+
+        <strong>
+          {product.size}
+        </strong>
+      </div>
+    )}
+
+    {product.color && (
+      <div>
+        <div
+          style={{
+            fontSize: 13,
+            color: "#94a3b8",
+          }}
+        >
+          Color
+        </div>
+
+        <strong>
+          {product.color}
+        </strong>
+      </div>
+    )}
+
+    <div>
+      <div
+        style={{
+          fontSize: 13,
+          color: "#94a3b8",
+        }}
+      >
+        Existencias
+      </div>
+
+      <strong>
+        {Number(
+          product.quantity ?? 0
+        )}{" "}
+        {Number(
+          product.quantity ?? 0
+        ) === 1
+          ? "unidad"
+          : "unidades"}
+      </strong>
+    </div>
+  </div>
+</div>
                 Comprar por WhatsApp
               </button>
             )}
