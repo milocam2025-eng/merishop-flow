@@ -223,18 +223,21 @@ const [selectedImage, setSelectedImage] =
           ← Volver a MeriShop
         </Link>
 
-        <div style={styles.card}>
+        <div
+  className="product-card"
+  style={styles.card}
+>
 
           <div style={styles.imageArea}>
            
 {selectedImage ? (
   <>
-    <img
-      src={selectedImage}
-      alt={product.product}
-      style={styles.image}
-    />
-
+   <img
+  className="product-main-image"
+  src={selectedImage}
+  alt={product.product}
+  style={styles.image}
+/>
     {images.length > 1 && (
       <div
         style={{
@@ -289,7 +292,10 @@ const [selectedImage, setSelectedImage] =
 )}
           </div>
 
-          <div style={styles.info}>
+          <div
+  className="product-info"
+  style={styles.info}
+>
 
             {product.category && (
               <div style={styles.category}>
@@ -335,12 +341,8 @@ const [selectedImage, setSelectedImage] =
                 : "Agotado"}
             </div>
 
-            {available && (
-              <button
-                type="button"
-                onClick={buyWhatsApp}
-                style={styles.whatsapp}
-              >
+        {/* DETALLES DEL PRODUCTO */}
+
 <div
   style={{
     marginBottom: 28,
@@ -460,18 +462,56 @@ const [selectedImage, setSelectedImage] =
     </div>
   </div>
 </div>
-                Comprar por WhatsApp
-              </button>
-            )}
 
-            <div style={styles.note}>
-              Compra segura directamente
-              con MeriShop.
-            </div>
 
+{/* BOTÓN WHATSAPP */}
+
+{available && (
+  <button
+    type="button"
+    onClick={buyWhatsApp}
+    style={styles.whatsapp}
+  >
+    Comprar por WhatsApp
+  </button>
+)}
+
+<div style={styles.note}>
+  Compra segura directamente
+  con MeriShop.
+</div>
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @media (max-width: 768px) {
+          .product-card {
+            grid-template-columns: 1fr !important;
+          }
+
+          .product-info {
+            padding: 24px !important;
+          }
+
+          .product-main-image {
+            height: 420px !important;
+            min-height: 0 !important;
+            object-fit: contain !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .product-info {
+            padding: 20px !important;
+          }
+
+          .product-main-image {
+            height: 340px !important;
+          }
+        }
+      `}</style>
+
     </main>
   );
 }
