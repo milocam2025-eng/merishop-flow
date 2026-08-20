@@ -176,8 +176,8 @@ const [selectedImage, setSelectedImage] =
     .join("\n");
 
   const url =
-    `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-      message
+     `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodeURIComponent(
+    message
     )}`;
 
   window.open(
