@@ -151,29 +151,29 @@ const [selectedImage, setSelectedImage] =
   const whatsappNumber =
     "18402792847";
 
-  const message = [
-    "Hola MeriShop 👋",
-    "",
-    "Me interesa este producto:",
-    "",
-    `🛍️ Producto: ${product.product}`,
-    product.brand
-      ? `🏷️ Marca: ${product.brand}`
-      : "",
-    product.size
-      ? `📏 Talla: ${product.size}`
-      : "",
-    product.color
-      ? `🎨 Color: ${product.color}`
-      : "",
-    `💰 Precio: ${money(
-      product.sale_price_mxn
-    )} MXN`,
-    "",
-    "¿Está disponible?",
-  ]
-    .filter(Boolean)
-    .join("\n");
+ const message = [
+  "Hola MeriShop",
+  "",
+  "Me interesa este producto:",
+  "",
+  `Producto: ${product.product}`,
+  product.brand
+    ? `Marca: ${product.brand}`
+    : "",
+  product.size
+    ? `Talla: ${product.size}`
+    : "",
+  product.color
+    ? `Color: ${product.color}`
+    : "",
+  `Precio: ${money(
+    product.sale_price_mxn
+  )} MXN`,
+  "",
+  "¿Está disponible?",
+]
+  .filter(Boolean)
+  .join("\n");
 
   const url =
      `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodeURIComponent(
