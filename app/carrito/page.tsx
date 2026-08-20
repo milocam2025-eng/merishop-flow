@@ -468,14 +468,20 @@ const styles: Record<
   },
 
   qtyButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    border: "1px solid #cbd5e1",
-    background: "#ffffff",
-    fontSize: 20,
-    cursor: "pointer",
-  },
+  width: 42,
+  height: 42,
+  borderRadius: 10,
+  border: "1px solid #cbd5e1",
+  background: "#ffffff",
+  color: "#172b4d",
+  fontSize: 24,
+  fontWeight: 800,
+  lineHeight: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+},
 
   qty: {
     minWidth: 30,
