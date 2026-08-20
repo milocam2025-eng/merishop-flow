@@ -273,7 +273,7 @@ export default function CartPage() {
                       }
                       style={styles.qtyButton}
                     >
-                      −
+                     -
                     </button>
 
                     <div style={styles.qty}>
