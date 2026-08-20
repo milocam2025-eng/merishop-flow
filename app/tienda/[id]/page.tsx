@@ -186,6 +186,63 @@ const [selectedImage, setSelectedImage] =
     "noopener,noreferrer"
   );
 }
+function addToCart() {
+  if (!product) return;
+
+  const savedCart =
+    localStorage.getItem("merishop_cart");
+
+  let cart: any[] = [];
+
+  if (savedCart) {
+    try {
+      cart = JSON.parse(savedCart);
+
+      if (!Array.isArray(cart)) {
+        cart = [];
+      }
+    } catch {
+      cart = [];
+    }
+  }
+
+  const existingIndex =
+    cart.findIndex(
+      (item) => item.id === product.id
+    );
+
+  if (existingIndex >= 0) {
+    cart[existingIndex].quantity =
+      Number(
+        cart[existingIndex].quantity ?? 1
+      ) + 1;
+  } else {
+    cart.push({
+      id: product.id,
+      product: product.product,
+      brand: product.brand,
+      size: product.size,
+      color: product.color,
+      price: Number(
+        product.sale_price_mxn ?? 0
+      ),
+      image:
+        selectedImage ||
+        product.image_url ||
+        "",
+      quantity: 1,
+    });
+  }
+
+  localStorage.setItem(
+    "merishop_cart",
+    JSON.stringify(cart)
+  );
+
+  alert(
+    `${product.product} fue agregado al carrito.`
+  );
+}
   if (loading) {
     return (
       <main style={styles.center}>
@@ -463,6 +520,16 @@ const [selectedImage, setSelectedImage] =
 {available && (
   <button
     type="button"
+    onClick={addToCart}
+    style={styles.cartButton}
+  >
+    🛒 Agregar al carrito
+  </button>
+)}
+
+{available && (
+  <button
+    type="button"
     onClick={buyWhatsApp}
     style={styles.whatsapp}
   >
@@ -615,6 +682,19 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#fee2e2",
     color: "#991b1b",
   },
+
+cartButton: {
+  width: "100%",
+  border: "2px solid #172b4d",
+  borderRadius: "14px",
+  padding: "17px",
+  background: "#ffffff",
+  color: "#172b4d",
+  fontSize: "18px",
+  fontWeight: 800,
+  cursor: "pointer",
+  marginBottom: "14px",
+},
 
   whatsapp: {
     width: "100%",
