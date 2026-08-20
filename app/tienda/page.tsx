@@ -39,6 +39,9 @@ export default function TiendaPage() {
   const [category, setCategory] =
     useState("Todos");
 
+const [cartCount, setCartCount] =
+  useState(0);
+
   useEffect(() => {
     async function loadProducts() {
       setLoading(true);
@@ -100,6 +103,51 @@ export default function TiendaPage() {
 
     loadProducts();
   }, []);
+useEffect(() => {
+  function loadCartCount() {
+    const savedCart =
+      localStorage.getItem("merishop_cart");
+
+    if (!savedCart) {
+      setCartCount(0);
+      return;
+    }
+
+    try {
+      const cart = JSON.parse(savedCart);
+
+      if (!Array.isArray(cart)) {
+        setCartCount(0);
+        return;
+      }
+
+      const totalItems = cart.reduce(
+        (total, item) =>
+          total +
+          Number(item.quantity ?? 1),
+        0
+      );
+
+      setCartCount(totalItems);
+    } catch {
+      setCartCount(0);
+    }
+  }
+
+  loadCartCount();
+
+  window.addEventListener(
+    "focus",
+    loadCartCount
+  );
+
+  return () => {
+    window.removeEventListener(
+      "focus",
+      loadCartCount
+    );
+  };
+}, []);
 
   const categories =
     useMemo(() => {
@@ -221,12 +269,17 @@ const url =
             "28px 20px",
         }}
       >
-        <div
-          style={{
-            maxWidth: 1200,
-            margin: "0 auto",
-          }}
-        >
+ <div
+  style={{
+    maxWidth: 1200,
+    margin: "0 auto",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 20,
+    flexWrap: "wrap",
+  }}
+>       
           <h1
             style={{
               margin: 0,
@@ -253,6 +306,23 @@ const url =
             Productos disponibles
             para compra
           </p>
+<Link
+  href="/carrito"
+  style={{
+    display: "inline-block",
+    padding: "12px 18px",
+    borderRadius: 12,
+    background: "#ffffff",
+    color: "#0f2d4d",
+    fontWeight: 800,
+    textDecoration: "none",
+    whiteSpace: "nowrap",
+  }}
+>
+  🛒 Ver carrito
+{cartCount > 0 && ` (${cartCount})`}
+
+</Link>
         </div>
       </header>
 
