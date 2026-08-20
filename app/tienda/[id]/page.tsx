@@ -146,44 +146,46 @@ const [selectedImage, setSelectedImage] =
 }, [id]);
 
   function buyWhatsApp() {
-    if (!product) return;
+  if (!product) return;
 
-    const whatsappNumber =
-      "18402792847";
+  const whatsappNumber =
+    "18402792847";
 
-    const message = [
-      "Hola MeriShop",
-      "",
-      "Me interesa este producto:",
-      "",
-      `Producto: ${product.product}`,
-      product.brand
-        ? `Marca: ${product.brand}`
-        : "",
-      product.size
-        ? `Talla: ${product.size}`
-        : "",
-      `Precio: ${money(
-        product.sale_price_mxn
-      )}`,
-      "",
-      "¿Está disponible?",
-    ]
-      .filter(Boolean)
-      .join("\n");
+  const message = [
+    "Hola MeriShop 👋",
+    "",
+    "Me interesa este producto:",
+    "",
+    `🛍️ Producto: ${product.product}`,
+    product.brand
+      ? `🏷️ Marca: ${product.brand}`
+      : "",
+    product.size
+      ? `📏 Talla: ${product.size}`
+      : "",
+    product.color
+      ? `🎨 Color: ${product.color}`
+      : "",
+    `💰 Precio: ${money(
+      product.sale_price_mxn
+    )} MXN`,
+    "",
+    "¿Está disponible?",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
-    const url =
-      `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-        message
-      )}`;
+  const url =
+    `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+      message
+    )}`;
 
-    window.open(
-      url,
-      "_blank",
-      "noopener,noreferrer"
-    );
-  }
-
+  window.open(
+    url,
+    "_blank",
+    "noopener,noreferrer"
+  );
+}
   if (loading) {
     return (
       <main style={styles.center}>
@@ -313,15 +315,7 @@ const [selectedImage, setSelectedImage] =
               </div>
             )}
 
-            {product.size && (
-              <div style={styles.detail}>
-                Talla:{" "}
-                <strong>
-                  {product.size}
-                </strong>
-              </div>
-            )}
-
+            
             <div style={styles.price}>
               {money(
                 product.sale_price_mxn
