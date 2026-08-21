@@ -50,18 +50,40 @@ export default function CartPage() {
   }
 
   function increaseQuantity(id: string) {
-    const updated = cart.map((item) =>
-      item.id === id
-        ? {
-            ...item,
-            quantity:
-              Number(item.quantity ?? 1) + 1,
-          }
-        : item
-    );
+  const updated = cart.map((item) => {
+    if (item.id !== id) {
+      return item;
+    }
 
-    saveCart(updated);
-  }
+    const currentQuantity =
+      Number(item.quantity ?? 1);
+
+    const maxStock =
+      Number(item.stock ?? 0);
+
+    if (
+      maxStock > 0 &&
+      currentQuantity >= maxStock
+    ) {
+      alert(
+        `Solo hay ${maxStock} ${
+          maxStock === 1
+            ? "unidad disponible"
+            : "unidades disponibles"
+        } de ${item.product}.`
+      );
+
+      return item;
+    }
+
+    return {
+      ...item,
+      quantity: currentQuantity + 1,
+    };
+  });
+
+  saveCart(updated);
+}
 
   function decreaseQuantity(id: string) {
     const updated = cart
