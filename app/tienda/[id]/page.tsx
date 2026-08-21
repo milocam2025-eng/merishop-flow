@@ -229,7 +229,8 @@ function addToCart() {
       image:
         selectedImage ||
         product.image_url ||
-        "",
+        "",   
+      stock: Number(product.quantity ?? 0),
       quantity: 1,
     });
   }

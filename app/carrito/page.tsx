@@ -11,6 +11,7 @@ type CartItem = {
   color?: string | null;
   price: number;
   image?: string;
+  stock: number;
   quantity: number;
 };
 
