@@ -211,12 +211,38 @@ function addToCart() {
       (item) => item.id === product.id
     );
 
-  if (existingIndex >= 0) {
-    cart[existingIndex].quantity =
-      Number(
-        cart[existingIndex].quantity ?? 1
-      ) + 1;
-  } else {
+if (existingIndex >= 0) {
+  const currentQuantity =
+    Number(
+      cart[existingIndex].quantity ?? 1
+    );
+
+  const maxStock =
+    Number(product.quantity ?? 0);
+
+  if (
+    maxStock > 0 &&
+    currentQuantity >= maxStock
+  ) {
+    alert(
+      `Solo hay ${maxStock} ${
+        maxStock === 1
+          ? "unidad disponible"
+          : "unidades disponibles"
+      } de ${product.product}.`
+    );
+
+    return;
+  }
+
+  cart[existingIndex].quantity =
+    currentQuantity + 1;
+
+  cart[existingIndex].stock =
+    maxStock;
+}
+
+     else {
     cart.push({
       id: product.id,
       product: product.product,
