@@ -2,6 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { createBrowserClient } from "@supabase/ssr";
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 type CartItem = {
   id: string;
@@ -130,8 +136,60 @@ export default function CartPage() {
     ).format(value);
   }
 
-  function sendWhatsAppOrder() {
+  async function sendWhatsAppOrder() {
   if (cart.length === 0) return;
+
+  const orderNumber =
+    `MS-${Date.now()}`;
+
+  const itemsForOrder = cart.map(
+    (item) => ({
+      inventory_id: item.id,
+      product: item.product,
+      brand: item.brand || null,
+      size: item.size || null,
+      color: item.color || null,
+      quantity: Number(item.quantity),
+      price: Number(item.price),
+      subtotal:
+        Number(item.price) *
+        Number(item.quantity),
+    })
+  );
+
+  const productSummary = cart
+    .map(
+      (item) =>
+        `${item.product} x${item.quantity}`
+    )
+    .join(", ");
+
+  const { error: orderError } =
+    await supabase
+      .from("orders")
+      .insert({
+        order_number: orderNumber,
+        source: "tienda",
+        product: productSummary,
+        items: itemsForOrder,
+        total_mxn: total,
+        total: total,
+        paid: 0,
+        status: "Pendiente",
+      });
+
+  if (orderError) {
+    console.error(
+      "Error guardando pedido:",
+      orderError
+    );
+
+    alert(
+      "No se pudo registrar el pedido. Intenta nuevamente."
+    );
+
+    return;
+  }
 
   const whatsappNumber =
     "18402792847";
@@ -156,15 +214,14 @@ export default function CartPage() {
         )} MXN`,
       ].filter(Boolean);
 
-      return [
-        ...lines,
-        "",
-      ];
+      return [...lines, ""];
     }
   );
 
   const message = [
     "Hola MeriShop",
+    "",
+    `Pedido: ${orderNumber}`,
     "",
     "Quiero realizar este pedido:",
     "",
