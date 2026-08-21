@@ -108,13 +108,14 @@ export default function CartPage() {
   }
 
   function sendWhatsAppOrder() {
-    if (cart.length === 0) return;
+  if (cart.length === 0) return;
 
-    const whatsappNumber =
-      "18402792847";
+  const whatsappNumber =
+    "18402792847";
 
-    const productLines = cart.flatMap(
-      (item, index) => [
+  const productLines = cart.flatMap(
+    (item, index) => {
+      const lines = [
         `${index + 1}. ${item.product}`,
         item.brand
           ? `Marca: ${item.brand}`
@@ -126,38 +127,41 @@ export default function CartPage() {
           ? `Color: ${item.color}`
           : "",
         `Cantidad: ${item.quantity}`,
-        `Precio: ${money(item.price)}`,
+        `Precio: ${money(item.price)} MXN`,
         `Subtotal: ${money(
           item.price * item.quantity
-        )}`,
+        )} MXN`,
+      ].filter(Boolean);
+
+      return [
+        ...lines,
         "",
-      ]
-    );
+      ];
+    }
+  );
 
-    const message = [
-      "Hola MeriShop",
-      "",
-      "Quiero realizar este pedido:",
-      "",
-      ...productLines,
-      `Total: ${money(total)}`,
-      "",
-      "¿Me puedes confirmar disponibilidad y forma de pago?",
-    ]
-      .filter(Boolean)
-      .join("\n");
+  const message = [
+    "Hola MeriShop",
+    "",
+    "Quiero realizar este pedido:",
+    "",
+    ...productLines,
+    `TOTAL DEL PEDIDO: ${money(total)} MXN`,
+    "",
+    "¿Me pueden confirmar disponibilidad, forma de pago y entrega?",
+  ].join("\n");
 
-    const url =
-      `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodeURIComponent(
-        message
-      )}`;
+  const url =
+    `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodeURIComponent(
+      message
+    )}`;
 
-    window.open(
-      url,
-      "_blank",
-      "noopener,noreferrer"
-    );
-  }
+  window.open(
+    url,
+    "_blank",
+    "noopener,noreferrer"
+  );
+}
 
   if (cart.length === 0) {
     return (
