@@ -279,7 +279,90 @@ async function cancelOrder(order: Order) {
 
   load();
 }
+async function confirmOrder(order: Order) {
+  if (order.status === "Confirmado") {
+    setMessage("Este pedido ya está confirmado.");
+    return;
+  }
 
+  if (order.status === "Cancelado") {
+    setMessage("No se puede confirmar un pedido cancelado.");
+    return;
+  }
+
+  const ok = confirm(
+    `¿Confirmar el pedido ${order.order_number || ""}?`
+  );
+
+  if (!ok) return;
+
+  const supabase = createClient();
+
+  const { error } = await supabase
+    .from("orders")
+    .update({
+      status: "Confirmado",
+    })
+    .eq("id", order.id);
+
+  if (error) {
+    setMessage(
+      "No se pudo confirmar el pedido: " +
+        error.message
+    );
+    return;
+  }
+
+  setMessage("Pedido confirmado correctamente.");
+
+  setSelectedOrder({
+    ...order,
+    status: "Confirmado",
+  });
+
+  load();
+}
+
+function contactCustomer(order: Order) {
+  const phone = String(
+    order.customer_phone || ""
+  ).replace(/\D/g, "");
+
+  if (!phone) {
+    alert(
+      "Este pedido no tiene número de WhatsApp."
+    );
+    return;
+  }
+
+  const message = [
+    "Hola",
+    order.customer_name
+      ? ` ${order.customer_name},`
+      : ",",
+    "",
+    "Te contactamos de MeriShop.",
+    "",
+    order.order_number
+      ? `Pedido: ${order.order_number}`
+      : "",
+    "",
+    "Tu pedido fue recibido. Estamos confirmando disponibilidad, pago y entrega.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const url =
+    `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(
+      message
+    )}`;
+
+  window.open(
+    url,
+    "_blank",
+    "noopener,noreferrer"
+  );
+}
 const clientName = (id: string | null) =>
   clients.find(c => c.id === id)?.name || "-";
   
@@ -699,6 +782,54 @@ onChange={(e) => {
                   ? " MXN"
                   : ""}
               </div>
+<div
+  style={{
+    display: "flex",
+    gap: 12,
+    flexWrap: "wrap",
+    marginTop: 24,
+  }}
+>
+  {row.status === "Pendiente" && (
+    <button
+      type="button"
+      onClick={() =>
+        confirmOrder(row)
+      }
+      style={{
+        border: "none",
+        borderRadius: 10,
+        padding: "12px 18px",
+        background: "#16a34a",
+        color: "#ffffff",
+        fontWeight: 700,
+        cursor: "pointer",
+      }}
+    >
+      Confirmar pedido
+    </button>
+  )}
+
+  {row.customer_phone && (
+    <button
+      type="button"
+      onClick={() =>
+        contactCustomer(row)
+      }
+      style={{
+        border: "none",
+        borderRadius: 10,
+        padding: "12px 18px",
+        background: "#25D366",
+        color: "#ffffff",
+        fontWeight: 700,
+        cursor: "pointer",
+      }}
+    >
+      WhatsApp al cliente
+    </button>
+  )}
+</div>
             </div>
           </td>
         </tr>
