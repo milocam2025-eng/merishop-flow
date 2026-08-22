@@ -47,13 +47,21 @@ type Order = {
     subtotal: number;
   }[] | null;
 };
-
+type Payment = {
+  id: string;
+  order_id: string;
+  amount: number;
+  method: string;
+  created_at: string;
+};
 export default function PedidosPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [rows, setRows] = useState<Order[]>([]);
 const [inventory, setInventory] = useState<Inventory[]>([]);
   const [message, setMessage] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [paymentHistory, setPaymentHistory] =
+    useState<Payment[]>([]);
   const [form, setForm] = useState({
 
     client_id: "", product: "", cost: "", inventory_id: "", tax: "0", commission: "20", shipping: "0", status: "Nuevo"
@@ -531,7 +539,7 @@ async function registerPayment(order: Order) {
     paid: newPaid,
     status: newStatus,
   });
-
+await loadPayments(order.id);
   setMessage(
     newStatus === "Pagado"
       ? "Pago registrado. Pedido pagado completamente."
@@ -545,9 +553,31 @@ async function registerPayment(order: Order) {
 
   load();
 }
+async function loadPayments(orderId: string) {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from("payments")
+    .select("id, order_id, amount, method, created_at")
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(
+      "Error cargando historial de pagos:",
+      error
+    );
+
+    setPaymentHistory([]);
+    return;
+  }
+
+  setPaymentHistory(
+    (data || []) as Payment[]
+  );
+}
 const clientName = (id: string | null) =>
-  clients.find(c => c.id === id)?.name || "-";
-  
+  clients.find((c) => c.id === id)?.name || "-";
   return (
     <AuthGuard>
       <AppShell title="Pedidos">
@@ -695,23 +725,23 @@ onChange={(e) => {
               flexWrap: "wrap",
             }}
           >
-            <button
-              type="button"
-              onClick={() =>
-                setSelectedOrder(
-                  selectedOrder?.id ===
-                    row.id
-                    ? null
-                    : row
-                )
-              }
-            >
-              {selectedOrder?.id ===
-              row.id
-                ? "Cerrar"
-                : "Ver detalle"}
-            </button>
+           <button
+  type="button"
+  onClick={async () => {
+    if (selectedOrder?.id === row.id) {
+      setSelectedOrder(null);
+      setPaymentHistory([]);
+      return;
+    }
 
+    setSelectedOrder(row);
+    await loadPayments(row.id);
+  }}
+>
+  {selectedOrder?.id === row.id
+    ? "Cerrar"
+    : "Ver detalle"}
+</button>
             {row.status !==
               "Cancelado" &&
             row.status !==
@@ -964,6 +994,174 @@ onChange={(e) => {
                   ? " MXN"
                   : ""}
               </div>
+<div
+  style={{
+    marginTop: 26,
+    paddingTop: 22,
+    borderTop: "1px solid #e2e8f0",
+  }}
+>
+  <h3 style={{ marginTop: 0 }}>
+    Historial de pagos
+  </h3>
+
+  {paymentHistory.length === 0 ? (
+    <p
+      style={{
+        color: "#64748b",
+      }}
+    >
+      No hay movimientos registrados
+      en el historial.
+    </p>
+  ) : (
+    <div
+      style={{
+        overflowX: "auto",
+      }}
+    >
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+        }}
+      >
+        <thead>
+          <tr>
+            <th
+              style={{
+                textAlign: "left",
+                padding: "10px 8px",
+              }}
+            >
+              Fecha
+            </th>
+
+            <th
+              style={{
+                textAlign: "left",
+                padding: "10px 8px",
+              }}
+            >
+              Método
+            </th>
+
+            <th
+              style={{
+                textAlign: "right",
+                padding: "10px 8px",
+              }}
+            >
+              Monto
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {paymentHistory.map(
+            (payment) => (
+              <tr key={payment.id}>
+                <td
+                  style={{
+                    padding: "10px 8px",
+                    borderTop:
+                      "1px solid #e2e8f0",
+                  }}
+                >
+                  {new Date(
+                    payment.created_at
+                  ).toLocaleString(
+                    "es-MX",
+                    {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    }
+                  )}
+                </td>
+
+                <td
+                  style={{
+                    padding: "10px 8px",
+                    borderTop:
+                      "1px solid #e2e8f0",
+                  }}
+                >
+                  {payment.method}
+                </td>
+
+                <td
+                  style={{
+                    padding: "10px 8px",
+                    borderTop:
+                      "1px solid #e2e8f0",
+                    textAlign: "right",
+                    fontWeight: 700,
+                  }}
+                >
+                  $
+                  {Number(
+                    payment.amount
+                  ).toLocaleString(
+                    "es-MX",
+                    {
+                      minimumFractionDigits: 2,
+                    }
+                  )}{" "}
+                  MXN
+                </td>
+              </tr>
+            )
+          )}
+        </tbody>
+      </table>
+    </div>
+  )}
+
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns:
+        "repeat(auto-fit, minmax(180px, 1fr))",
+      gap: 12,
+      marginTop: 18,
+      padding: 16,
+      background: "#ffffff",
+      borderRadius: 10,
+    }}
+  >
+    <div>
+      <strong>Pagado acumulado</strong>
+      <div>
+        $
+        {Number(
+          row.paid ?? 0
+        ).toLocaleString("es-MX", {
+          minimumFractionDigits: 2,
+        })}{" "}
+        MXN
+      </div>
+    </div>
+
+    <div>
+      <strong>Saldo pendiente</strong>
+      <div>
+        $
+        {Math.max(
+          0,
+          Number(
+            row.total_mxn ??
+              row.total ??
+              0
+          ) -
+            Number(row.paid ?? 0)
+        ).toLocaleString("es-MX", {
+          minimumFractionDigits: 2,
+        })}{" "}
+        MXN
+      </div>
+    </div>
+  </div>
+</div>
 <div
   style={{
     display: "flex",
