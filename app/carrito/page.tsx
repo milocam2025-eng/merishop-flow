@@ -23,6 +23,8 @@ type CartItem = {
 
 export default function CartPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
 
   useEffect(() => {
     const savedCart =
@@ -136,11 +138,21 @@ export default function CartPage() {
     ).format(value);
   }
 
-  async function sendWhatsAppOrder() {
+async function sendWhatsAppOrder() {
   if (cart.length === 0) return;
 
+  if (!customerName.trim()) {
+    alert("Escribe tu nombre antes de enviar el pedido.");
+    return;
+  }
+
+  if (!customerPhone.trim()) {
+    alert("Escribe tu número de WhatsApp antes de enviar el pedido.");
+    return;
+  }
+
   const orderNumber =
-    `MS-${Date.now()}`;
+    `MS-${Date.now()}`; 
 
   const itemsForOrder = cart.map(
     (item) => ({
@@ -170,6 +182,8 @@ export default function CartPage() {
       .insert({
         order_number: orderNumber,
         source: "tienda",
+        customer_name: customerName.trim(),
+        customer_phone: customerPhone.trim(),
         product: productSummary,
         items: itemsForOrder,
         total_mxn: total,
@@ -218,12 +232,14 @@ export default function CartPage() {
     }
   );
 
-  const message = [
-    "Hola MeriShop",
-    "",
-    `Pedido: ${orderNumber}`,
-    "",
-    "Quiero realizar este pedido:",
+const message = [
+  "Hola MeriShop",
+  "",
+  `Pedido: ${orderNumber}`,
+  `Cliente: ${customerName}`,
+  `WhatsApp: ${customerPhone}`,
+  "",
+  "Quiero realizar este pedido:",
     "",
     ...productLines,
     `TOTAL DEL PEDIDO: ${money(total)} MXN`,
@@ -389,10 +405,42 @@ export default function CartPage() {
             ))}
           </div>
 
-          <div style={styles.summary}>
-            <h2 style={styles.summaryTitle}>
-              Resumen del pedido
-            </h2>
+         <div style={styles.summary}>
+  <div style={styles.customerBox}>
+    <h2 style={styles.customerTitle}>
+      Datos del cliente
+    </h2>
+
+    <label style={styles.customerLabel}>
+      Nombre
+      <input
+        type="text"
+        value={customerName}
+        onChange={(e) =>
+          setCustomerName(e.target.value)
+        }
+        placeholder="Tu nombre completo"
+        style={styles.customerInput}
+      />
+    </label>
+
+    <label style={styles.customerLabel}>
+      WhatsApp
+      <input
+        type="tel"
+        value={customerPhone}
+        onChange={(e) =>
+          setCustomerPhone(e.target.value)
+        }
+        placeholder="Ej. 9991234567"
+        style={styles.customerInput}
+      />
+    </label>
+  </div>
+
+  <h2 style={styles.summaryTitle}>
+    Resumen del pedido
+  </h2>
 
             <div style={styles.summaryRow}>
               <span>Productos</span>
@@ -573,24 +621,54 @@ const styles: Record<
     fontWeight: 700,
   },
 
-  removeButton: {
-    border: "none",
-    background: "transparent",
-    color: "#dc2626",
-    fontWeight: 700,
-    cursor: "pointer",
-    padding: 0,
-  },
+ removeButton: {
+  border: "none",
+  background: "transparent",
+  color: "#dc2626",
+  fontWeight: 700,
+  cursor: "pointer",
+  padding: 0,
+},
 
-  summary: {
-    background: "#ffffff",
-    borderRadius: 18,
-    padding: 24,
-    boxShadow:
-      "0 8px 24px rgba(0,0,0,0.06)",
-    position: "sticky",
-    top: 20,
-  },
+customerBox: {
+  marginBottom: 26,
+  paddingBottom: 24,
+  borderBottom: "1px solid #e2e8f0",
+},
+
+customerTitle: {
+  margin: "0 0 18px",
+  color: "#172b4d",
+  fontSize: 22,
+},
+
+customerLabel: {
+  display: "block",
+  marginBottom: 16,
+  color: "#334155",
+  fontWeight: 700,
+},
+
+customerInput: {
+  width: "100%",
+  marginTop: 8,
+  padding: "13px 14px",
+  borderRadius: 10,
+  border: "1px solid #cbd5e1",
+  fontSize: 16,
+  boxSizing: "border-box",
+  outline: "none",
+},
+
+summary: {
+  background: "#ffffff",
+  borderRadius: 18,
+  padding: 24,
+  boxShadow:
+    "0 8px 24px rgba(0,0,0,0.06)",
+  position: "sticky",
+  top: 20,
+},
 
   summaryTitle: {
     margin: "0 0 20px",
