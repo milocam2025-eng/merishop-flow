@@ -363,6 +363,99 @@ function contactCustomer(order: Order) {
     "noopener,noreferrer"
   );
 }
+async function registerPayment(order: Order) {
+  if (order.status === "Cancelado") {
+    setMessage("No se puede registrar un pago en un pedido cancelado.");
+    return;
+  }
+
+  const totalOrder = Number(
+    order.total_mxn ??
+      order.total ??
+      0
+  );
+
+  const alreadyPaid = Number(
+    order.paid ?? 0
+  );
+
+  const remaining = Math.max(
+    0,
+    totalOrder - alreadyPaid
+  );
+
+  if (remaining <= 0) {
+    setMessage("Este pedido ya está pagado.");
+    return;
+  }
+
+  const value = prompt(
+    `Saldo pendiente: $${remaining.toLocaleString("es-MX", {
+      minimumFractionDigits: 2,
+    })} MXN\n\nEscribe el monto recibido:`
+  );
+
+  if (value === null) return;
+
+  const amount = Number(
+    value.replace(",", "")
+  );
+
+  if (
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ) {
+    alert("Escribe un monto válido.");
+    return;
+  }
+
+  if (amount > remaining) {
+    alert(
+      "El pago no puede ser mayor al saldo pendiente."
+    );
+    return;
+  }
+
+  const newPaid =
+    alreadyPaid + amount;
+
+  const newStatus =
+    newPaid >= totalOrder
+      ? "Pagado"
+      : order.status;
+
+  const supabase = createClient();
+
+  const { error } = await supabase
+    .from("orders")
+    .update({
+      paid: newPaid,
+      status: newStatus,
+    })
+    .eq("id", order.id);
+
+  if (error) {
+    setMessage(
+      "No se pudo registrar el pago: " +
+        error.message
+    );
+    return;
+  }
+
+  setSelectedOrder({
+    ...order,
+    paid: newPaid,
+    status: newStatus,
+  });
+
+  setMessage(
+    newStatus === "Pagado"
+      ? "Pedido pagado completamente."
+      : "Pago registrado correctamente."
+  );
+
+  load();
+}
 const clientName = (id: string | null) =>
   clients.find(c => c.id === id)?.name || "-";
   
@@ -827,6 +920,26 @@ onChange={(e) => {
       }}
     >
       WhatsApp al cliente
+    </button>
+  )}
+{row.status !== "Cancelado" &&
+  row.status !== "Pagado" && (
+    <button
+      type="button"
+      onClick={() =>
+        registerPayment(row)
+      }
+      style={{
+        border: "none",
+        borderRadius: 10,
+        padding: "12px 18px",
+        background: "#2563eb",
+        color: "#ffffff",
+        fontWeight: 700,
+        cursor: "pointer",
+      }}
+    >
+      Registrar pago
     </button>
   )}
 </div>
