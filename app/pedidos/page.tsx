@@ -365,7 +365,9 @@ function contactCustomer(order: Order) {
 }
 async function registerPayment(order: Order) {
   if (order.status === "Cancelado") {
-    setMessage("No se puede registrar un pago en un pedido cancelado.");
+    setMessage(
+      "No se puede registrar un pago en un pedido cancelado."
+    );
     return;
   }
 
@@ -385,33 +387,106 @@ async function registerPayment(order: Order) {
   );
 
   if (remaining <= 0) {
-    setMessage("Este pedido ya está pagado.");
+    setMessage(
+      "Este pedido ya está pagado."
+    );
     return;
   }
 
   const value = prompt(
-    `Saldo pendiente: $${remaining.toLocaleString("es-MX", {
-      minimumFractionDigits: 2,
-    })} MXN\n\nEscribe el monto recibido:`
+    `Saldo pendiente: $${remaining.toLocaleString(
+      "es-MX",
+      {
+        minimumFractionDigits: 2,
+      }
+    )} MXN\n\nEscribe el monto recibido:`
   );
 
   if (value === null) return;
 
   const amount = Number(
-    value.replace(",", "")
+    value.replace(/,/g, "")
   );
 
   if (
     !Number.isFinite(amount) ||
     amount <= 0
   ) {
-    alert("Escribe un monto válido.");
+    alert(
+      "Escribe un monto válido."
+    );
     return;
   }
 
   if (amount > remaining) {
     alert(
       "El pago no puede ser mayor al saldo pendiente."
+    );
+    return;
+  }
+
+  const methodInput = prompt(
+    "Método de pago:\n\n" +
+      "1. Transferencia\n" +
+      "2. Efectivo\n" +
+      "3. Tarjeta\n" +
+      "4. Depósito\n" +
+      "5. Otro\n\n" +
+      "Escribe el número:"
+  );
+
+  if (methodInput === null) return;
+
+  const methods: Record<string, string> = {
+    "1": "Transferencia",
+    "2": "Efectivo",
+    "3": "Tarjeta",
+    "4": "Depósito",
+    "5": "Otro",
+  };
+
+  const method =
+    methods[methodInput.trim()];
+
+  if (!method) {
+    alert(
+      "Selecciona un método de pago válido."
+    );
+    return;
+  }
+
+  const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    setMessage(
+      "Tu sesión terminó. Inicia sesión nuevamente."
+    );
+    return;
+  }
+
+  // 1. Guardar movimiento en payments
+  const {
+    data: payment,
+    error: paymentError,
+  } = await supabase
+    .from("payments")
+    .insert({
+      user_id: user.id,
+      order_id: order.id,
+      amount,
+      method,
+    })
+    .select("id")
+    .single();
+
+  if (paymentError) {
+    setMessage(
+      "No se pudo guardar el pago: " +
+        paymentError.message
     );
     return;
   }
@@ -424,20 +499,29 @@ async function registerPayment(order: Order) {
       ? "Pagado"
       : order.status;
 
-  const supabase = createClient();
+  // 2. Actualizar total pagado del pedido
+  const { error: orderError } =
+    await supabase
+      .from("orders")
+      .update({
+        paid: newPaid,
+        status: newStatus,
+      })
+      .eq("id", order.id);
 
-  const { error } = await supabase
-    .from("orders")
-    .update({
-      paid: newPaid,
-      status: newStatus,
-    })
-    .eq("id", order.id);
+  if (orderError) {
+    // Si falla orders, eliminamos
+    // el movimiento recién creado.
+    if (payment?.id) {
+      await supabase
+        .from("payments")
+        .delete()
+        .eq("id", payment.id);
+    }
 
-  if (error) {
     setMessage(
-      "No se pudo registrar el pago: " +
-        error.message
+      "No se pudo actualizar el pedido: " +
+        orderError.message
     );
     return;
   }
@@ -450,8 +534,13 @@ async function registerPayment(order: Order) {
 
   setMessage(
     newStatus === "Pagado"
-      ? "Pedido pagado completamente."
-      : "Pago registrado correctamente."
+      ? "Pago registrado. Pedido pagado completamente."
+      : `Pago de $${amount.toLocaleString(
+          "es-MX",
+          {
+            minimumFractionDigits: 2,
+          }
+        )} registrado por ${method}.`
   );
 
   load();
