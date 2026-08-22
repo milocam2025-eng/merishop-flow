@@ -53,7 +53,9 @@ export default function PedidosPage() {
   const [rows, setRows] = useState<Order[]>([]);
 const [inventory, setInventory] = useState<Inventory[]>([]);
   const [message, setMessage] = useState("");
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [form, setForm] = useState({
+
     client_id: "", product: "", cost: "", inventory_id: "", tax: "0", commission: "20", shipping: "0", status: "Nuevo"
   });
 
@@ -410,27 +412,181 @@ onChange={(e) => {
         <StatusBadge value={row.status} />
       </td>
 
-      <td>
-        {row.status !== "Cancelado" &&
-        row.status !== "Pagado" ? (
-          <button
-            type="button"
-            className="danger"
-            onClick={() =>
-              cancelOrder(row)
-            }
-          >
-            Cancelar
-          </button>
-        ) : (
-          <span>{row.status}</span>
-        )}
-      </td>
+<td>
+  <div
+    style={{
+      display: "flex",
+      gap: 8,
+      flexWrap: "wrap",
+    }}
+  >
+    <button
+      type="button"
+      onClick={() => setSelectedOrder(row)}
+    >
+      Ver detalle
+    </button>
+
+    {row.status !== "Cancelado" &&
+    row.status !== "Pagado" ? (
+      <button
+        type="button"
+        className="danger"
+        onClick={() => cancelOrder(row)}
+      >
+        Cancelar
+      </button>
+    ) : (
+      <span>{row.status}</span>
+    )}
+  </div>
+</td>
     </tr>
   ))}
 </tbody>
 </table>          
  
+{selectedOrder && (
+  <section className="panel">
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: 16,
+        marginBottom: 20,
+      }}
+    >
+      <h2 style={{ margin: 0 }}>
+        Detalle del pedido
+      </h2>
+
+      <button
+        type="button"
+        onClick={() => setSelectedOrder(null)}
+      >
+        Cerrar
+      </button>
+    </div>
+
+    <p>
+      <strong>Pedido:</strong>{" "}
+      {selectedOrder.order_number || "-"}
+    </p>
+
+    <p>
+      <strong>Origen:</strong>{" "}
+      {selectedOrder.source === "tienda"
+        ? "Tienda online"
+        : "Administración"}
+    </p>
+
+    <p>
+      <strong>Cliente:</strong>{" "}
+      {selectedOrder.customer_name ||
+        clientName(selectedOrder.client_id)}
+    </p>
+
+    <p>
+      <strong>WhatsApp:</strong>{" "}
+      {selectedOrder.customer_phone || "-"}
+    </p>
+
+    <p>
+      <strong>Estado:</strong>{" "}
+      {selectedOrder.status}
+    </p>
+
+    {selectedOrder.items &&
+    selectedOrder.items.length > 0 ? (
+      <>
+        <h3>Productos</h3>
+
+        {selectedOrder.items.map(
+          (item, index) => (
+            <div
+              key={`${item.inventory_id || index}`}
+              style={{
+                padding: "14px 0",
+                borderBottom:
+                  "1px solid #e2e8f0",
+              }}
+            >
+              <strong>
+                {item.product}
+              </strong>
+
+              {item.brand && (
+                <div>
+                  Marca: {item.brand}
+                </div>
+              )}
+
+              {item.size && (
+                <div>
+                  Talla: {item.size}
+                </div>
+              )}
+
+              {item.color && (
+                <div>
+                  Color: {item.color}
+                </div>
+              )}
+
+              <div>
+                Cantidad: {item.quantity}
+              </div>
+
+              <div>
+                Precio: $
+                {Number(item.price).toLocaleString(
+                  "es-MX",
+                  {
+                    minimumFractionDigits: 2,
+                  }
+                )}{" "}
+                MXN
+              </div>
+
+              <div>
+                Subtotal: $
+                {Number(
+                  item.subtotal
+                ).toLocaleString(
+                  "es-MX",
+                  {
+                    minimumFractionDigits: 2,
+                  }
+                )}{" "}
+                MXN
+              </div>
+            </div>
+          )
+        )}
+      </>
+    ) : (
+      <p>
+        <strong>Producto:</strong>{" "}
+        {selectedOrder.product}
+      </p>
+    )}
+
+    <h3 style={{ marginTop: 24 }}>
+      Total: $
+      {Number(
+        selectedOrder.total_mxn ??
+          selectedOrder.total ??
+          0
+      ).toLocaleString("es-MX", {
+        minimumFractionDigits: 2,
+      })}
+      {selectedOrder.source === "tienda"
+        ? " MXN"
+        : ""}
+    </h3>
+  </section>
+)}
       </section>
     </AppShell>
   </AuthGuard>
