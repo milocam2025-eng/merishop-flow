@@ -352,241 +352,362 @@ onChange={(e) => {
   </thead>
 <tbody>
   {rows.map((row) => (
-    <tr key={row.id}>
-      <td>
-        {row.order_number || "-"}
-      </td>
+    <>
+      <tr key={row.id}>
+        <td>
+          {row.order_number || "-"}
+        </td>
 
-      <td>
-        {row.source === "tienda"
-          ? "Tienda online"
-          : "Administración"}
-      </td>
+        <td>
+          {row.source === "tienda"
+            ? "Tienda online"
+            : "Administración"}
+        </td>
 
-      <td>
-        {row.customer_name ||
-          clientName(row.client_id)}
-      </td>
+        <td>
+          {row.customer_name ||
+            clientName(row.client_id) ||
+            "-"}
+        </td>
 
-      <td>
-        {row.product}
-      </td>
+        <td>
+          {row.product}
+        </td>
 
-      <td>
-        {row.source === "tienda"
-          ? `$${Number(
-              row.total_mxn ?? row.total ?? 0
-            ).toLocaleString("es-MX", {
-              minimumFractionDigits: 2,
-            })} MXN`
-          : `$${Number(
-              row.total ?? 0
-            ).toFixed(2)}`}
-      </td>
+        <td>
+          {row.source === "tienda"
+            ? `$${Number(
+                row.total_mxn ?? row.total ?? 0
+              ).toLocaleString("es-MX", {
+                minimumFractionDigits: 2,
+              })} MXN`
+            : `$${Number(
+                row.total ?? 0
+              ).toFixed(2)}`}
+        </td>
 
-      <td>
-        ${Number(row.paid ?? 0).toFixed(2)}
-      </td>
+        <td>
+          ${Number(
+            row.paid ?? 0
+          ).toLocaleString("es-MX", {
+            minimumFractionDigits: 2,
+          })}
+        </td>
 
-      <td>
-        {row.source === "tienda"
-          ? `$${Math.max(
-              0,
-              Number(
-                row.total_mxn ??
-                  row.total ??
-                  0
-              ) -
-                Number(row.paid ?? 0)
-            ).toLocaleString("es-MX", {
-              minimumFractionDigits: 2,
-            })} MXN`
-          : `$${Math.max(
-              0,
-              Number(row.total ?? 0) -
-                Number(row.paid ?? 0)
-            ).toFixed(2)}`}
-      </td>
+        <td>
+          {row.source === "tienda"
+            ? `$${Math.max(
+                0,
+                Number(
+                  row.total_mxn ??
+                    row.total ??
+                    0
+                ) -
+                  Number(
+                    row.paid ?? 0
+                  )
+              ).toLocaleString("es-MX", {
+                minimumFractionDigits: 2,
+              })} MXN`
+            : `$${Math.max(
+                0,
+                Number(row.total ?? 0) -
+                  Number(row.paid ?? 0)
+              ).toFixed(2)}`}
+        </td>
 
-      <td>
-        <StatusBadge value={row.status} />
-      </td>
+        <td>
+          <StatusBadge
+            value={row.status}
+          />
+        </td>
 
-<td>
-  <div
-    style={{
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap",
-    }}
-  >
-    <button
-      type="button"
-      onClick={() => setSelectedOrder(row)}
-    >
-      Ver detalle
-    </button>
+        <td>
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              flexWrap: "wrap",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() =>
+                setSelectedOrder(
+                  selectedOrder?.id ===
+                    row.id
+                    ? null
+                    : row
+                )
+              }
+            >
+              {selectedOrder?.id ===
+              row.id
+                ? "Cerrar"
+                : "Ver detalle"}
+            </button>
 
-    {row.status !== "Cancelado" &&
-    row.status !== "Pagado" ? (
-      <button
-        type="button"
-        className="danger"
-        onClick={() => cancelOrder(row)}
-      >
-        Cancelar
-      </button>
-    ) : (
-      <span>{row.status}</span>
-    )}
-  </div>
-</td>
-    </tr>
-  ))}
-</tbody>
-</table>          
- 
-{selectedOrder && (
-  <section className="panel">
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: 16,
-        marginBottom: 20,
-      }}
-    >
-      <h2 style={{ margin: 0 }}>
-        Detalle del pedido
-      </h2>
+            {row.status !==
+              "Cancelado" &&
+            row.status !==
+              "Pagado" ? (
+              <button
+                type="button"
+                className="danger"
+                onClick={() =>
+                  cancelOrder(row)
+                }
+              >
+                Cancelar
+              </button>
+            ) : (
+              <span>
+                {row.status}
+              </span>
+            )}
+          </div>
+        </td>
+      </tr>
 
-      <button
-        type="button"
-        onClick={() => setSelectedOrder(null)}
-      >
-        Cerrar
-      </button>
-    </div>
-
-    <p>
-      <strong>Pedido:</strong>{" "}
-      {selectedOrder.order_number || "-"}
-    </p>
-
-    <p>
-      <strong>Origen:</strong>{" "}
-      {selectedOrder.source === "tienda"
-        ? "Tienda online"
-        : "Administración"}
-    </p>
-
-    <p>
-      <strong>Cliente:</strong>{" "}
-      {selectedOrder.customer_name ||
-        clientName(selectedOrder.client_id)}
-    </p>
-
-    <p>
-      <strong>WhatsApp:</strong>{" "}
-      {selectedOrder.customer_phone || "-"}
-    </p>
-
-    <p>
-      <strong>Estado:</strong>{" "}
-      {selectedOrder.status}
-    </p>
-
-    {selectedOrder.items &&
-    selectedOrder.items.length > 0 ? (
-      <>
-        <h3>Productos</h3>
-
-        {selectedOrder.items.map(
-          (item, index) => (
+      {selectedOrder?.id ===
+        row.id && (
+        <tr>
+          <td
+            colSpan={9}
+            style={{
+              background:
+                "#f8fafc",
+              padding: 0,
+            }}
+          >
             <div
-              key={`${item.inventory_id || index}`}
               style={{
-                padding: "14px 0",
+                padding: 24,
+                borderTop:
+                  "1px solid #e2e8f0",
                 borderBottom:
                   "1px solid #e2e8f0",
               }}
             >
-              <strong>
-                {item.product}
-              </strong>
+              <h2
+                style={{
+                  marginTop: 0,
+                  marginBottom: 18,
+                }}
+              >
+                Detalle del pedido
+              </h2>
 
-              {item.brand && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(auto-fit, minmax(180px, 1fr))",
+                  gap: 14,
+                  marginBottom: 22,
+                }}
+              >
                 <div>
-                  Marca: {item.brand}
+                  <strong>
+                    Pedido
+                  </strong>
+                  <div>
+                    {row.order_number ||
+                      "-"}
+                  </div>
                 </div>
-              )}
 
-              {item.size && (
                 <div>
-                  Talla: {item.size}
+                  <strong>
+                    Origen
+                  </strong>
+                  <div>
+                    {row.source ===
+                    "tienda"
+                      ? "Tienda online"
+                      : "Administración"}
+                  </div>
                 </div>
-              )}
 
-              {item.color && (
                 <div>
-                  Color: {item.color}
+                  <strong>
+                    Cliente
+                  </strong>
+                  <div>
+                    {row.customer_name ||
+                      clientName(
+                        row.client_id
+                      ) ||
+                      "-"}
+                  </div>
                 </div>
-              )}
 
-              <div>
-                Cantidad: {item.quantity}
+                <div>
+                  <strong>
+                    WhatsApp
+                  </strong>
+                  <div>
+                    {row.customer_phone ||
+                      "-"}
+                  </div>
+                </div>
+
+                <div>
+                  <strong>
+                    Estado
+                  </strong>
+                  <div>
+                    {row.status}
+                  </div>
+                </div>
               </div>
 
-              <div>
-                Precio: $
-                {Number(item.price).toLocaleString(
-                  "es-MX",
-                  {
-                    minimumFractionDigits: 2,
-                  }
-                )}{" "}
-                MXN
-              </div>
+              {row.items &&
+              row.items.length >
+                0 ? (
+                <>
+                  <h3>
+                    Productos
+                  </h3>
 
-              <div>
-                Subtotal: $
+                  {row.items.map(
+                    (
+                      item,
+                      index
+                    ) => (
+                      <div
+                        key={
+                          item.inventory_id ||
+                          index
+                        }
+                        style={{
+                          padding:
+                            "14px 0",
+                          borderBottom:
+                            "1px solid #e2e8f0",
+                        }}
+                      >
+                        <strong>
+                          {
+                            item.product
+                          }
+                        </strong>
+
+                        <div
+                          style={{
+                            display:
+                              "grid",
+                            gridTemplateColumns:
+                              "repeat(auto-fit, minmax(150px, 1fr))",
+                            gap: 8,
+                            marginTop: 8,
+                          }}
+                        >
+                          {item.brand && (
+                            <div>
+                              Marca:{" "}
+                              {
+                                item.brand
+                              }
+                            </div>
+                          )}
+
+                          {item.size && (
+                            <div>
+                              Talla:{" "}
+                              {
+                                item.size
+                              }
+                            </div>
+                          )}
+
+                          {item.color && (
+                            <div>
+                              Color:{" "}
+                              {
+                                item.color
+                              }
+                            </div>
+                          )}
+
+                          <div>
+                            Cantidad:{" "}
+                            {
+                              item.quantity
+                            }
+                          </div>
+
+                          <div>
+                            Precio: $
+                            {Number(
+                              item.price
+                            ).toLocaleString(
+                              "es-MX",
+                              {
+                                minimumFractionDigits: 2,
+                              }
+                            )}{" "}
+                            MXN
+                          </div>
+
+                          <div>
+                            Subtotal: $
+                            {Number(
+                              item.subtotal
+                            ).toLocaleString(
+                              "es-MX",
+                              {
+                                minimumFractionDigits: 2,
+                              }
+                            )}{" "}
+                            MXN
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </>
+              ) : (
+                <p>
+                  <strong>
+                    Producto:
+                  </strong>{" "}
+                  {row.product}
+                </p>
+              )}
+
+              <div
+                style={{
+                  marginTop: 22,
+                  fontSize: 20,
+                  fontWeight: 800,
+                }}
+              >
+                Total: $
                 {Number(
-                  item.subtotal
+                  row.total_mxn ??
+                    row.total ??
+                    0
                 ).toLocaleString(
                   "es-MX",
                   {
                     minimumFractionDigits: 2,
                   }
-                )}{" "}
-                MXN
+                )}
+                {row.source ===
+                "tienda"
+                  ? " MXN"
+                  : ""}
               </div>
             </div>
-          )
-        )}
-      </>
-    ) : (
-      <p>
-        <strong>Producto:</strong>{" "}
-        {selectedOrder.product}
-      </p>
-    )}
-
-    <h3 style={{ marginTop: 24 }}>
-      Total: $
-      {Number(
-        selectedOrder.total_mxn ??
-          selectedOrder.total ??
-          0
-      ).toLocaleString("es-MX", {
-        minimumFractionDigits: 2,
-      })}
-      {selectedOrder.source === "tienda"
-        ? " MXN"
-        : ""}
-    </h3>
-  </section>
-)}
+          </td>
+        </tr>
+      )}
+    </>
+  ))}
+</tbody>
+</table>          
+ 
       </section>
     </AppShell>
   </AuthGuard>
