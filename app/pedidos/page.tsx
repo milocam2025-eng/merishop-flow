@@ -419,64 +419,30 @@ async function registerPayment(order: Order) {
     return;
   }
 
-  const value = prompt(
-    `Saldo pendiente: $${remaining.toLocaleString(
-      "es-MX",
-      {
-        minimumFractionDigits: 2,
-      }
-    )} MXN\n\nEscribe el monto recibido:`
-  );
-
-  if (value === null) return;
-
   const amount = Number(
-    value.replace(/,/g, "")
+    paymentAmount.replace(/,/g, "")
   );
 
   if (
     !Number.isFinite(amount) ||
     amount <= 0
   ) {
-    alert(
+    setMessage(
       "Escribe un monto válido."
     );
     return;
   }
 
   if (amount > remaining) {
-    alert(
+    setMessage(
       "El pago no puede ser mayor al saldo pendiente."
     );
     return;
   }
 
-  const methodInput = prompt(
-    "Método de pago:\n\n" +
-      "1. Transferencia\n" +
-      "2. Efectivo\n" +
-      "3. Tarjeta\n" +
-      "4. Depósito\n" +
-      "5. Otro\n\n" +
-      "Escribe el número:"
-  );
-
-  if (methodInput === null) return;
-
-  const methods: Record<string, string> = {
-    "1": "Transferencia",
-    "2": "Efectivo",
-    "3": "Tarjeta",
-    "4": "Depósito",
-    "5": "Otro",
-  };
-
-  const method =
-    methods[methodInput.trim()];
-
-  if (!method) {
-    alert(
-      "Selecciona un método de pago válido."
+  if (!paymentMethod) {
+    setMessage(
+      "Selecciona un método de pago."
     );
     return;
   }
@@ -494,7 +460,6 @@ async function registerPayment(order: Order) {
     return;
   }
 
-  // 1. Guardar movimiento en payments
   const {
     data: payment,
     error: paymentError,
@@ -504,7 +469,7 @@ async function registerPayment(order: Order) {
       user_id: user.id,
       order_id: order.id,
       amount,
-      method,
+      method: paymentMethod,
     })
     .select("id")
     .single();
@@ -525,7 +490,6 @@ async function registerPayment(order: Order) {
       ? "Pagado"
       : order.status;
 
-  // 2. Actualizar total pagado del pedido
   const { error: orderError } =
     await supabase
       .from("orders")
@@ -536,8 +500,6 @@ async function registerPayment(order: Order) {
       .eq("id", order.id);
 
   if (orderError) {
-    // Si falla orders, eliminamos
-    // el movimiento recién creado.
     if (payment?.id) {
       await supabase
         .from("payments")
@@ -557,7 +519,13 @@ async function registerPayment(order: Order) {
     paid: newPaid,
     status: newStatus,
   });
-await loadPayments(order.id);
+
+  await loadPayments(order.id);
+
+  setPaymentAmount("");
+  setPaymentMethod("Transferencia");
+  setShowPaymentForm(false);
+
   setMessage(
     newStatus === "Pagado"
       ? "Pago registrado. Pedido pagado completamente."
@@ -566,7 +534,7 @@ await loadPayments(order.id);
           {
             minimumFractionDigits: 2,
           }
-        )} registrado por ${method}.`
+        )} registrado por ${paymentMethod}.`
   );
 
   load();
