@@ -57,14 +57,32 @@ type Payment = {
 export default function PedidosPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [rows, setRows] = useState<Order[]>([]);
-const [inventory, setInventory] = useState<Inventory[]>([]);
+  const [inventory, setInventory] = useState<Inventory[]>([]);
   const [message, setMessage] = useState("");
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] =
+    useState<Order | null>(null);
+
   const [paymentHistory, setPaymentHistory] =
     useState<Payment[]>([]);
-  const [form, setForm] = useState({
 
-    client_id: "", product: "", cost: "", inventory_id: "", tax: "0", commission: "20", shipping: "0", status: "Nuevo"
+  const [showPaymentForm, setShowPaymentForm] =
+    useState(false);
+
+  const [paymentAmount, setPaymentAmount] =
+    useState("");
+
+  const [paymentMethod, setPaymentMethod] =
+    useState("Transferencia");
+
+  const [form, setForm] = useState({
+    client_id: "",
+    product: "",
+    cost: "",
+    inventory_id: "",
+    tax: "0",
+    commission: "20",
+    shipping: "0",
+    status: "Nuevo",
   });
 
   async function load() {
@@ -1214,7 +1232,9 @@ onChange={(e) => {
     <button
       type="button"
       onClick={() =>
-        registerPayment(row)
+        setShowPaymentForm(
+          !showPaymentForm
+        )
       }
       style={{
         border: "none",
@@ -1226,12 +1246,144 @@ onChange={(e) => {
         cursor: "pointer",
       }}
     >
-      Registrar pago
+      {showPaymentForm
+        ? "Cerrar pago"
+        : "Registrar pago"}
     </button>
+ 
   )}
 </div>
+
+{showPaymentForm &&
+  selectedOrder?.id === row.id && (
+    <div
+      style={{
+        marginTop: 20,
+        padding: 20,
+        background: "#ffffff",
+        borderRadius: 12,
+        border: "1px solid #e2e8f0",
+        maxWidth: 520,
+      }}
+    >
+      <h3
+        style={{
+          marginTop: 0,
+          marginBottom: 18,
+        }}
+      >
+        Registrar nuevo pago
+      </h3>
+
+      <div
+        style={{
+          display: "grid",
+          gap: 14,
+        }}
+      >
+        <label>
+          <strong>Monto</strong>
+
+          <input
+            type="number"
+            min="0.01"
+            step="0.01"
+            value={paymentAmount}
+            onChange={(e) =>
+              setPaymentAmount(
+                e.target.value
+              )
+            }
+            placeholder="0.00"
+            style={{
+              width: "100%",
+              marginTop: 6,
+              padding: 12,
+              borderRadius: 8,
+              border: "1px solid #cbd5e1",
+              fontSize: 16,
+            }}
+          />
+        </label>
+
+        <label>
+          <strong>Método de pago</strong>
+
+          <select
+            value={paymentMethod}
+            onChange={(e) =>
+              setPaymentMethod(
+                e.target.value
+              )
+            }
+            style={{
+              width: "100%",
+              marginTop: 6,
+              padding: 12,
+              borderRadius: 8,
+              border: "1px solid #cbd5e1",
+              fontSize: 16,
+            }}
+          >
+            <option>Transferencia</option>
+            <option>Depósito</option>
+            <option>Efectivo</option>
+            <option>Tarjeta</option>
+            <option>Otro</option>
+          </select>
+        </label>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            flexWrap: "wrap",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() =>
+              registerPayment(row)
+            }
+            style={{
+              border: "none",
+              borderRadius: 9,
+              padding: "12px 18px",
+              background: "#16a34a",
+              color: "#ffffff",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Guardar pago
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowPaymentForm(false);
+              setPaymentAmount("");
+              setPaymentMethod("Transferencia");
+            }}
+            style={{
+              border: "1px solid #cbd5e1",
+              borderRadius: 9,
+              padding: "12px 18px",
+              background: "#ffffff",
+              color: "#172b4d",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+
             </div>
-          </td>
+          </td>        
         </tr>
       )}
     </>
