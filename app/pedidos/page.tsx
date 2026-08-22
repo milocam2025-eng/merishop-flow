@@ -17,9 +17,35 @@ type Inventory = {
   shipping_usd: number | null;
 };
 type Order = {
-  id: string; product: string; cost: number; tax: number; commission_percent: number;
-  shipping: number; total: number; paid: number; status: string; client_id: string | null;
+  id: string;
+  product: string;
+  cost: number;
+  tax: number;
+  commission_percent: number;
+  shipping: number;
+  total: number;
+  paid: number;
+  status: string;
+  client_id: string | null;
   inventory_id: string | null;
+
+  order_number?: string | null;
+  source?: string | null;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  total_mxn?: number | null;
+  created_at?: string | null;
+
+  items?: {
+    inventory_id?: string;
+    product: string;
+    brand?: string | null;
+    size?: string | null;
+    color?: string | null;
+    quantity: number;
+    price: number;
+    subtotal: number;
+  }[] | null;
 };
 
 export default function PedidosPage() {
@@ -256,40 +282,103 @@ onChange={(e) => {
         </section>
 
         <section className="panel table-wrap">
-          <table><thead><tr><th>Cliente</th><th>Producto</th><th>Total</th><th>Pagado</th><th>Saldo</th><th>Estado</th><th>Acciones</th></tr></thead>
- <tbody>
+<table>
+  <thead>
+    <tr>
+      <th>Pedido</th>
+      <th>Origen</th>
+      <th>Cliente</th>
+      <th>Producto</th>
+      <th>Total</th>
+      <th>Pagado</th>
+      <th>Saldo</th>
+      <th>Estado</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+<tbody>
   {rows.map((row) => (
     <tr key={row.id}>
-      <td>{clientName(row.client_id)}</td>
-      <td>{row.product}</td>
-      <td>${Number(row.total).toFixed(2)}</td>
-      <td>${Number(row.paid).toFixed(2)}</td>
       <td>
-        ${Math.max(
-          0,
-          Number(row.total) - Number(row.paid)
-        ).toFixed(2)}
+        {row.order_number || "-"}
       </td>
+
+      <td>
+        {row.source === "tienda"
+          ? "Tienda online"
+          : "Administración"}
+      </td>
+
+      <td>
+        {row.customer_name ||
+          clientName(row.client_id)}
+      </td>
+
+      <td>
+        {row.product}
+      </td>
+
+      <td>
+        {row.source === "tienda"
+          ? `$${Number(
+              row.total_mxn ?? row.total ?? 0
+            ).toLocaleString("es-MX", {
+              minimumFractionDigits: 2,
+            })} MXN`
+          : `$${Number(
+              row.total ?? 0
+            ).toFixed(2)}`}
+      </td>
+
+      <td>
+        ${Number(row.paid ?? 0).toFixed(2)}
+      </td>
+
+      <td>
+        {row.source === "tienda"
+          ? `$${Math.max(
+              0,
+              Number(
+                row.total_mxn ??
+                  row.total ??
+                  0
+              ) -
+                Number(row.paid ?? 0)
+            ).toLocaleString("es-MX", {
+              minimumFractionDigits: 2,
+            })} MXN`
+          : `$${Math.max(
+              0,
+              Number(row.total ?? 0) -
+                Number(row.paid ?? 0)
+            ).toFixed(2)}`}
+      </td>
+
       <td>
         <StatusBadge value={row.status} />
       </td>
+
       <td>
-        {row.status !== "Cancelado" && row.status !== "Pagado" ? (
+        {row.status !== "Cancelado" &&
+        row.status !== "Pagado" ? (
           <button
             type="button"
             className="danger"
-            onClick={() => cancelOrder(row)}
+            onClick={() =>
+              cancelOrder(row)
+            }
           >
             Cancelar
           </button>
         ) : (
-         <span>{row.status}</span>
+          <span>{row.status}</span>
         )}
       </td>
     </tr>
   ))}
 </tbody>
-        </table>
+</table>          
+ 
       </section>
     </AppShell>
   </AuthGuard>
