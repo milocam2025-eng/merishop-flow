@@ -226,6 +226,44 @@ function trackingUrl(
       return null;
   }
 }
+function contactShipmentCustomer(shipment: Shipment) {
+  const phone =
+    shipment.orders?.customer_phone?.replace(/\D/g, "");
+
+  if (!phone) {
+    setMessage(
+      "Este pedido no tiene número de WhatsApp registrado."
+    );
+    return;
+  }
+
+  const orderNumber =
+    shipment.orders?.order_number || "tu pedido";
+
+  const customerName =
+    shipment.orders?.customer_name || "cliente";
+
+  const carrier =
+    shipment.carrier || "la paquetería";
+
+  const tracking =
+    shipment.tracking || "";
+
+  const url = trackingUrl(
+    shipment.carrier,
+    shipment.tracking
+  );
+
+  const text =
+    shipment.status === "Entregado"
+      ? `Hola ${customerName}. Tu pedido ${orderNumber} aparece como entregado. Gracias por comprar con MeriShop.`
+      : `Hola ${customerName}. Tu pedido ${orderNumber} está en estado: ${shipment.status}. Paquetería: ${carrier}.${tracking ? ` Número de rastreo: ${tracking}.` : ""}${url ? ` Seguimiento: ${url}` : ""}`;
+
+  window.open(
+    `https://wa.me/${phone}?text=${encodeURIComponent(text)}`,
+    "_blank"
+  );
+}
   const name = (id: string | null) => clients.find(c => c.id === id)?.name || "-";
 const shipmentClientName = (
   shipment: Shipment
@@ -310,6 +348,7 @@ const paidOrders = orders.filter((order) => {
       <th>Rastreo</th>
       <th>Estado</th>
       <th>Fecha entrega</th>
+      <th>Acciones</th>
     </tr>
   </thead>          
 <tbody>
@@ -386,7 +425,29 @@ const paidOrders = orders.filter((order) => {
       )
     : "-"}
 </td>
-
+<td>
+  {r.orders?.customer_phone ? (
+    <button
+      type="button"
+      onClick={() =>
+        contactShipmentCustomer(r)
+      }
+      style={{
+        border: "none",
+        borderRadius: 8,
+        padding: "10px 14px",
+        background: "#25D366",
+        color: "#ffffff",
+        fontWeight: 700,
+        cursor: "pointer",
+      }}
+    >
+      WhatsApp
+    </button>
+  ) : (
+    "-"
+  )}
+</td>
     </tr>
   ))}
 </tbody>   
