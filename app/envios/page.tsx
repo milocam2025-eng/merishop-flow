@@ -208,8 +208,47 @@ const paidOrders = orders.filter((order) => {
         </section>
 
         <section className="panel table-wrap">
-          <table><thead><tr><th>Cliente</th><th>Paquetería</th><th>Rastreo</th><th>Estado</th></tr></thead>
-          <tbody>{rows.map(r => <tr key={r.id}><td>{shipmentClientName(r)}</td><td>{r.carrier || "-"}</td><td>{r.tracking || "-"}</td><td><StatusBadge value={r.status}/></td></tr>)}</tbody></table>
+<table>
+  <thead>
+    <tr>
+      <th>Pedido</th>
+      <th>Cliente</th>
+      <th>Producto</th>
+      <th>Paquetería</th>
+      <th>Rastreo</th>
+      <th>Estado</th>
+    </tr>
+  </thead>          
+<tbody>
+  {rows.map((r) => (
+    <tr key={r.id}>
+      <td>
+        {r.orders?.order_number || "-"}
+      </td>
+
+      <td>
+        {shipmentClientName(r)}
+      </td>
+
+      <td>
+        {r.orders?.product || "-"}
+      </td>
+
+      <td>
+        {r.carrier || "-"}
+      </td>
+
+      <td>
+        {r.tracking || "-"}
+      </td>
+
+      <td>
+        <StatusBadge value={r.status} />
+      </td>
+    </tr>
+  ))}
+</tbody>   
+</table>
         </section>
       </AppShell>
     </AuthGuard>
