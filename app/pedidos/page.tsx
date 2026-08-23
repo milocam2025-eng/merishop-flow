@@ -129,7 +129,8 @@ if (Number(selectedItem.quantity || 0) <= 0) {
   setMessage("Este producto ya no tiene existencias.");
   return;
 }
-
+const orderNumber =
+  "MS-" + Date.now();
 const { error } = await supabase.from("orders").insert({
   user_id: user.id,
   client_id: form.client_id || null,
@@ -141,7 +142,8 @@ const { error } = await supabase.from("orders").insert({
   shipping,
   total,
   paid: 0,
-  status: form.status
+  status: form.status,
+  order_number: orderNumber,
 });
 
 if (error) {
