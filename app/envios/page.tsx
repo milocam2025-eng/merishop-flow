@@ -17,7 +17,11 @@ type Order = {
   customer_phone?: string | null;
 };
 
-type Client = { id: string; name: string };
+type Client = {
+  id: string;
+  name: string;
+  phone: string | null;
+};
 type Shipment = {
   id: string;
   order_id: string | null;
@@ -49,8 +53,8 @@ async function load() {
   const [clientsResult, ordersResult, shipmentsResult] =
     await Promise.all([
       s.from("clients")
-        .select("id,name")
-        .order("name"),
+  .select("id,name,phone")
+  .order("name"),
 
       s.from("orders")
         .select("id,client_id,product,total,paid,status,order_number,customer_name,customer_phone,total_mxn")
@@ -227,16 +231,28 @@ function trackingUrl(
   }
 }
 function contactShipmentCustomer(shipment: Shipment) {
-  const phone =
-    shipment.orders?.customer_phone?.replace(/\D/g, "");
+  const clientId =
+  shipment.client_id ||
+  shipment.orders?.client_id ||
+  null;
 
-  if (!phone) {
-    setMessage(
-      "Este pedido no tiene número de WhatsApp registrado."
-    );
-    return;
-  }
+const client = clients.find(
+  (c) => c.id === clientId
+);
 
+const rawPhone =
+  shipment.orders?.customer_phone ||
+  client?.phone ||
+  "";
+
+const phone = rawPhone.replace(/\D/g, "");
+
+if (!phone) {
+  setMessage(
+    "Este pedido no tiene número de WhatsApp registrado."
+  );
+  return;
+}
   const orderNumber =
     shipment.orders?.order_number || "tu pedido";
 
@@ -474,27 +490,34 @@ const paidOrders = orders.filter((order) => {
     : "-"}
 </td>
 <td>
-  {r.orders?.customer_phone ? (
-    <button
-      type="button"
-      onClick={() =>
-        contactShipmentCustomer(r)
-      }
-      style={{
-        border: "none",
-        borderRadius: 8,
-        padding: "10px 14px",
-        background: "#25D366",
-        color: "#ffffff",
-        fontWeight: 700,
-        cursor: "pointer",
-      }}
-    >
-      WhatsApp
-    </button>
-  ) : (
-    "-"
-  )}
+  {(
+  r.orders?.customer_phone ||
+  clients.find(
+    (c) =>
+      c.id ===
+      (r.client_id || r.orders?.client_id)
+  )?.phone
+) ? (
+  <button
+    type="button"
+    onClick={() =>
+      contactShipmentCustomer(r)
+    }
+    style={{
+      border: "none",
+      borderRadius: 8,
+      padding: "10px 14px",
+      background: "#25D366",
+      color: "#ffffff",
+      fontWeight: 700,
+      cursor: "pointer",
+    }}
+  >
+    WhatsApp
+  </button>
+) : (
+  "-"
+)}
 </td>
     </tr>
   ))}
