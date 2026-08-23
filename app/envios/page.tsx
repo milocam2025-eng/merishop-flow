@@ -13,7 +13,10 @@ type Order = {
   total: number;
   paid: number;
   status: string;
-}
+  order_number?: string | null;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+};
 
 type Client = { id: string; name: string };
 type Shipment = {
@@ -41,8 +44,10 @@ export default function EnviosPage() {
         .select("id,name")
         .order("name"),
 
-      s.from("orders")
-        .select("id,client_id,product,total,paid,status")
+    s.from("orders")
+  .select(
+    "id,client_id,product,total,paid,status,order_number,customer_name,customer_phone"
+  )
         .order("created_at", { ascending: false }),
 
       s.from("shipments")
@@ -148,11 +153,14 @@ const paidOrders = orders.filter((order) => {
     </option>
 
     {paidOrders.map((o) => (
-      <option key={o.id} value={o.id}>
-        {o.product} — Pagado $
-        {Number(o.total || 0).toFixed(2)}
-      </option>
-    ))}
+  <option key={o.id} value={o.id}>
+    {o.order_number || "Pedido"} —{" "}
+    {o.customer_name ||
+      name(o.client_id)}{" "}
+    — {o.product} — $
+    {Number(o.total || 0).toFixed(2)}
+  </option>
+))}
   </select>
 </label>
             <label>Paquetería<select value={form.carrier} onChange={e => setForm({ ...form, carrier: e.target.value })}><option>USPS</option><option>UPS</option><option>FedEx</option><option>DHL</option></select></label>
