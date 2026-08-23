@@ -3,7 +3,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import AuthGuard from "@/components/AuthGuard";
-import StatusBadge from "@/components/StatusBadge";
 import { createClient } from "@/lib/supabase/client";
 
 type Order = {
@@ -146,6 +145,43 @@ async function submit(e: FormEvent) {
 
   load();
 }   
+async function updateShipmentStatus(
+  id: string,
+  newStatus: string
+) {
+  const s = createClient();
+
+  const { error } = await s
+    .from("shipments")
+    .update({
+      status: newStatus,
+    })
+    .eq("id", id);
+
+  if (error) {
+    setMessage(
+      "Error al actualizar el envío: " +
+        error.message
+    );
+    return;
+  }
+
+  setRows((current) =>
+    current.map((row) =>
+      row.id === id
+        ? {
+            ...row,
+            status: newStatus,
+          }
+        : row
+    )
+  );
+
+  setMessage(
+    "Estado del envío actualizado."
+  );
+}
+
   const name = (id: string | null) => clients.find(c => c.id === id)?.name || "-";
 const shipmentClientName = (
   shipment: Shipment
@@ -242,9 +278,34 @@ const paidOrders = orders.filter((order) => {
         {r.tracking || "-"}
       </td>
 
-      <td>
-        <StatusBadge value={r.status} />
-      </td>
+<td>
+  <select
+    value={r.status}
+    onChange={(e) =>
+      updateShipmentStatus(
+        r.id,
+        e.target.value
+      )
+    }
+  >
+    <option value="Preparando">
+      Preparando
+    </option>
+
+    <option value="Enviado">
+      Enviado
+    </option>
+
+    <option value="En tránsito">
+      En tránsito
+    </option>
+
+    <option value="Entregado">
+      Entregado
+    </option>
+  </select>
+</td>
+      
     </tr>
   ))}
 </tbody>   
