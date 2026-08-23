@@ -111,6 +111,17 @@ async function submit(e: FormEvent) {
     );
     return;
   }
+const existingShipment = rows.find(
+  (shipment) =>
+    shipment.order_id === order.id
+);
+
+if (existingShipment) {
+  setMessage(
+    "Este pedido ya tiene un envío registrado."
+  );
+  return;
+}
 
   const { error } = await s
     .from("shipments")
@@ -231,10 +242,16 @@ const shipmentClientName = (
   return name(clientId);
 };
 const paidOrders = orders.filter((order) => {
-  return (
+  const isPaid =
     order.status === "Pagado" &&
-    Number(order.paid || 0) >= Number(order.total || 0)
+    Number(order.paid || 0) >= Number(order.total || 0);
+
+  const alreadyHasShipment = rows.some(
+    (shipment) =>
+      shipment.order_id === order.id
   );
+
+  return isPaid && !alreadyHasShipment;
 });
   return (
     <AuthGuard>
