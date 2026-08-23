@@ -174,16 +174,16 @@ async function updateShipmentStatus(
   }
 
   setRows((current) =>
-    current.map((row) =>
-      row.id === id
-        ? {
-            ...row,
-            status: newStatus,
-          }
-        : row
-    )
-  );
-
+  current.map((row) =>
+    row.id === id
+      ? {
+          ...row,
+          status: newStatus,
+          delivered_at: deliveredAt,
+        }
+      : row
+  )
+);
   setMessage(
     newStatus === "Entregado"
       ? "Envío marcado como entregado."
