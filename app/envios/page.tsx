@@ -254,10 +254,58 @@ function contactShipmentCustomer(shipment: Shipment) {
     shipment.tracking
   );
 
-  const text =
-    shipment.status === "Entregado"
-      ? `Hola ${customerName}. Tu pedido ${orderNumber} aparece como entregado. Gracias por comprar con MeriShop.`
-      : `Hola ${customerName}. Tu pedido ${orderNumber} está en estado: ${shipment.status}. Paquetería: ${carrier}.${tracking ? ` Número de rastreo: ${tracking}.` : ""}${url ? ` Seguimiento: ${url}` : ""}`;
+  let text = "";
+
+  switch (shipment.status) {
+    case "Preparando":
+      text =
+        `Hola ${customerName}. ` +
+        `Estamos preparando tu pedido ${orderNumber}. ` +
+        `Te avisaremos cuando sea enviado. ` +
+        `Gracias por comprar con MeriShop.`;
+      break;
+
+    case "Enviado":
+      text =
+        `Hola ${customerName}. ` +
+        `¡Tu pedido ${orderNumber} ya fue enviado! ` +
+        `Paquetería: ${carrier}.` +
+        (tracking
+          ? ` Número de rastreo: ${tracking}.`
+          : "") +
+        (url
+          ? ` Puedes darle seguimiento aquí: ${url}`
+          : "") +
+        ` Gracias por comprar con MeriShop.`;
+      break;
+
+    case "En tránsito":
+      text =
+        `Hola ${customerName}. ` +
+        `Tu pedido ${orderNumber} continúa en camino. ` +
+        `Paquetería: ${carrier}.` +
+        (tracking
+          ? ` Número de rastreo: ${tracking}.`
+          : "") +
+        (url
+          ? ` Seguimiento: ${url}`
+          : "") +
+        ` Gracias por tu preferencia.`;
+      break;
+
+    case "Entregado":
+      text =
+        `Hola ${customerName}. ` +
+        `Tu pedido ${orderNumber} aparece como entregado. ` +
+        `Esperamos que disfrutes tu compra. ` +
+        `Gracias por comprar con MeriShop.`;
+      break;
+
+    default:
+      text =
+        `Hola ${customerName}. ` +
+        `Tu pedido ${orderNumber} está en estado: ${shipment.status}.`;
+  }
 
   window.open(
     `https://wa.me/${phone}?text=${encodeURIComponent(text)}`,
