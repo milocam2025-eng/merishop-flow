@@ -57,37 +57,57 @@ export default function EnviosPage() {
     
    useEffect(() => { load(); }, []);
 
- async function submit(e: FormEvent) {
+async function submit(e: FormEvent) {
   e.preventDefault();
 
   const s = createClient();
 
+  const {
+    data: { user },
+  } = await s.auth.getUser();
+
+  if (!user) {
+    setMessage(
+      "Tu sesión terminó. Inicia sesión nuevamente."
+    );
+    return;
+  }
+
   // Buscar el pedido seleccionado
   const order = paidOrders.find(
-    o => o.id === form.order_id
+    (o) => o.id === form.order_id
   );
 
   if (!order) {
-    setMessage("Selecciona un pedido.");
+    setMessage(
+      "Selecciona un pedido pagado."
+    );
     return;
   }
 
   const { error } = await s
     .from("shipments")
     .insert({
+      user_id: user.id,
       order_id: order.id,
       client_id: order.client_id,
       carrier: form.carrier,
-      tracking: form.tracking,
+      tracking:
+        form.tracking.trim() || null,
       status: form.status,
     });
 
   if (error) {
-    setMessage(error.message);
+    setMessage(
+      "No se pudo guardar el envío: " +
+        error.message
+    );
     return;
   }
 
-  setMessage("Envío guardado.");
+  setMessage(
+    "Envío guardado correctamente."
+  );
 
   setForm({
     order_id: "",
@@ -98,8 +118,7 @@ export default function EnviosPage() {
   });
 
   load();
-}
-   
+}   
   const name = (id: string | null) => clients.find(c => c.id === id)?.name || "-";
 const paidOrders = orders.filter((order) => {
   return (
