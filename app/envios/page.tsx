@@ -25,6 +25,7 @@ type Shipment = {
   carrier: string | null;
   tracking: string | null;
   status: string;
+  delivered_at: string | null;
 
   orders?: {
     order_number?: string | null;
@@ -151,10 +152,16 @@ async function updateShipmentStatus(
 ) {
   const s = createClient();
 
+  const deliveredAt =
+    newStatus === "Entregado"
+      ? new Date().toISOString()
+      : null;
+
   const { error } = await s
     .from("shipments")
     .update({
       status: newStatus,
+      delivered_at: deliveredAt,
     })
     .eq("id", id);
 
@@ -178,10 +185,11 @@ async function updateShipmentStatus(
   );
 
   setMessage(
-    "Estado del envío actualizado."
+    newStatus === "Entregado"
+      ? "Envío marcado como entregado."
+      : "Estado del envío actualizado."
   );
 }
-
   const name = (id: string | null) => clients.find(c => c.id === id)?.name || "-";
 const shipmentClientName = (
   shipment: Shipment
@@ -253,6 +261,7 @@ const paidOrders = orders.filter((order) => {
       <th>Paquetería</th>
       <th>Rastreo</th>
       <th>Estado</th>
+      <th>Fecha entrega</th>
     </tr>
   </thead>          
 <tbody>
@@ -305,7 +314,18 @@ const paidOrders = orders.filter((order) => {
     </option>
   </select>
 </td>
-      
+      <td>
+  {r.delivered_at
+    ? new Date(r.delivered_at).toLocaleString(
+        "es-MX",
+        {
+          dateStyle: "short",
+          timeStyle: "short",
+        }
+      )
+    : "-"}
+</td>
+
     </tr>
   ))}
 </tbody>   
