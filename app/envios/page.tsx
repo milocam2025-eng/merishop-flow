@@ -121,7 +121,7 @@ async function submit(e: FormEvent) {
       carrier: form.carrier,
       tracking:
         form.tracking.trim() || null,
-      status: form.status,
+       status: "Preparando",
     });
 
   if (error) {
@@ -245,7 +245,13 @@ const paidOrders = orders.filter((order) => {
 </label>
             <label>Paquetería<select value={form.carrier} onChange={e => setForm({ ...form, carrier: e.target.value })}><option>USPS</option><option>UPS</option><option>FedEx</option><option>DHL</option></select></label>
             <label>Rastreo<input value={form.tracking} onChange={e => setForm({ ...form, tracking: e.target.value })}/></label>
-            <label>Estado<select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}><option>Preparando</option><option>Enviado</option><option>En tránsito</option><option>Entregado</option></select></label>
+            <label>
+  Estado
+  <input
+    value="Preparando"
+    readOnly
+  />
+</label>
             <button type="submit">Guardar envío</button>
           </form>
           <p className="message">{message}</p>
