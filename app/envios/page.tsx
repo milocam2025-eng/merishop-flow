@@ -26,6 +26,14 @@ type Shipment = {
   carrier: string | null;
   tracking: string | null;
   status: string;
+
+  orders?: {
+    order_number?: string | null;
+    customer_name?: string | null;
+    customer_phone?: string | null;
+    client_id?: string | null;
+    product?: string | null;
+  } | null;
 };
 
 export default function EnviosPage() {
@@ -35,7 +43,7 @@ export default function EnviosPage() {
   const [form, setForm] = useState({ order_id: "", client_id: "", carrier: "USPS", tracking: "", status: "Preparando" });
   const [message, setMessage] = useState("");
 
- async function load() {
+async function load() {
   const s = createClient();
 
   const [clientsResult, ordersResult, shipmentsResult] =
@@ -44,22 +52,36 @@ export default function EnviosPage() {
         .select("id,name")
         .order("name"),
 
-    s.from("orders")
-  .select(
-    "id,client_id,product,total,paid,status,order_number,customer_name,customer_phone"
-  )
+      s.from("orders")
+        .select("id,client_id,product,total,paid,status,order_number,customer_name,customer_phone,total_mxn")
         .order("created_at", { ascending: false }),
 
       s.from("shipments")
-        .select("*")
+        .select(`
+          *,
+          orders (
+            order_number,
+            customer_name,
+            customer_phone,
+            client_id,
+            product
+          )
+        `)
         .order("created_at", { ascending: false }),
     ]);
 
-  setClients((clientsResult.data as Client[]) ?? []);
-  setOrders((ordersResult.data as Order[]) ?? []);
-  setRows((shipmentsResult.data as Shipment[]) ?? []);
-}
-    
+  setClients(
+    (clientsResult.data as Client[]) ?? []
+  );
+
+  setOrders(
+    (ordersResult.data as Order[]) ?? []
+  );
+
+  setRows(
+    (shipmentsResult.data as Shipment[]) ?? []
+  );
+}    
    useEffect(() => { load(); }, []);
 
 async function submit(e: FormEvent) {
@@ -125,6 +147,20 @@ async function submit(e: FormEvent) {
   load();
 }   
   const name = (id: string | null) => clients.find(c => c.id === id)?.name || "-";
+const shipmentClientName = (
+  shipment: Shipment
+) => {
+  if (shipment.orders?.customer_name) {
+    return shipment.orders.customer_name;
+  }
+
+  const clientId =
+    shipment.client_id ||
+    shipment.orders?.client_id ||
+    null;
+
+  return name(clientId);
+};
 const paidOrders = orders.filter((order) => {
   return (
     order.status === "Pagado" &&
@@ -173,7 +209,7 @@ const paidOrders = orders.filter((order) => {
 
         <section className="panel table-wrap">
           <table><thead><tr><th>Cliente</th><th>Paquetería</th><th>Rastreo</th><th>Estado</th></tr></thead>
-          <tbody>{rows.map(r => <tr key={r.id}><td>{name(r.client_id)}</td><td>{r.carrier || "-"}</td><td>{r.tracking || "-"}</td><td><StatusBadge value={r.status}/></td></tr>)}</tbody></table>
+          <tbody>{rows.map(r => <tr key={r.id}><td>{shipmentClientName(r)}</td><td>{r.carrier || "-"}</td><td>{r.tracking || "-"}</td><td><StatusBadge value={r.status}/></td></tr>)}</tbody></table>
         </section>
       </AppShell>
     </AuthGuard>
