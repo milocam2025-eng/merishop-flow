@@ -11,7 +11,10 @@ type Order = {
   total: number;
   paid: number;
   status: string;
+  order_number?: string | null;
+  customer_name?: string | null;
 };
+
 type Payment = { id: string; amount: number; method: string | null; order_id: string | null; created_at: string };
 
 export default function PagosPage() {
@@ -24,7 +27,7 @@ export default function PagosPage() {
     const s = createClient();
     const [ordersResult, paymentResult] = await Promise.all([
     s.from("orders")
-  .select("id,product,total,paid,status")
+  .select("id,product,total,paid,status,order_number,customer_name")
   .order("created_at", { ascending: false }),
       s.from("payments").select("*").order("created_at", { ascending: false })
     ]);
@@ -165,13 +168,15 @@ console.log("PEDIDOS PENDIENTES:", pendingOrders);
       setForm({ ...form, order_id: e.target.value })
     }
   >
-    <option value="">Sin pedido</option>
+    <option value="">Seleccionar pedido</option>
 
     {pendingOrders.map((o) => (
       <option key={o.id} value={o.id}>
-        {o.product} — saldo $
-        {(Number(o.total) - Number(o.paid)).toFixed(2)}
-      </option>
+  {o.order_number || "Pedido"} —{" "}
+  {o.customer_name || "Cliente"} —{" "}
+  {o.product} — saldo $
+  {(Number(o.total) - Number(o.paid)).toFixed(2)}
+</option>
     ))}
   </select>
 </label>
@@ -218,8 +223,51 @@ console.log("PEDIDOS PENDIENTES:", pendingOrders);
         </section>
 
         <section className="panel table-wrap">
-          <table><thead><tr><th>Fecha</th><th>Monto</th><th>Método</th></tr></thead>
-          <tbody>{rows.map(p => <tr key={p.id}><td>{new Date(p.created_at).toLocaleDateString("es-MX")}</td><td>${Number(p.amount).toFixed(2)}</td><td>{p.method || "-"}</td></tr>)}</tbody></table>
+         <table>
+  <thead>
+    <tr>
+      <th>Fecha</th>
+      <th>Pedido</th>
+      <th>Cliente</th>
+      <th>Monto</th>
+      <th>Método</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {rows.map((p) => {
+      const order = orders.find(
+        (o) => o.id === p.order_id
+      );
+
+      return (
+        <tr key={p.id}>
+          <td>
+            {new Date(
+              p.created_at
+            ).toLocaleDateString("es-MX")}
+          </td>
+
+          <td>
+            {order?.order_number || "-"}
+          </td>
+
+          <td>
+            {order?.customer_name || "-"}
+          </td>
+
+          <td>
+            ${Number(p.amount).toFixed(2)}
+          </td>
+
+          <td>
+            {p.method || "-"}
+          </td>
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
         </section>
       </AppShell>
     </AuthGuard>
