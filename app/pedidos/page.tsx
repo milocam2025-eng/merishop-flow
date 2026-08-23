@@ -397,11 +397,7 @@ async function registerPayment(order: Order) {
     return;
   }
 
-  const totalOrder = Number(
-    order.total_mxn ??
-      order.total ??
-      0
-  );
+  const totalOrder = orderTotal(order);
 
   const alreadyPaid = Number(
     order.paid ?? 0
@@ -564,6 +560,18 @@ async function loadPayments(orderId: string) {
 }
 const clientName = (id: string | null) =>
   clients.find((c) => c.id === id)?.name || "-";
+
+const orderTotal = (order: Order) => {
+  if (order.source === "tienda") {
+    return Number(
+      order.total_mxn ||
+      order.total ||
+      0
+    );
+  }
+
+  return Number(order.total || 0);
+};
   return (
     <AuthGuard>
       <AppShell title="Pedidos">
@@ -965,16 +973,12 @@ onChange={(e) => {
                 }}
               >
                 Total: $
-                {Number(
-                  row.total_mxn ??
-                    row.total ??
-                    0
-                ).toLocaleString(
-                  "es-MX",
-                  {
-                    minimumFractionDigits: 2,
-                  }
-                )}
+{orderTotal(row).toLocaleString(
+  "es-MX",
+  {
+    minimumFractionDigits: 2,
+  }
+)}
                 {row.source ===
                 "tienda"
                   ? " MXN"
@@ -1134,12 +1138,8 @@ onChange={(e) => {
         $
         {Math.max(
           0,
-          Number(
-            row.total_mxn ??
-              row.total ??
-              0
-          ) -
-            Number(row.paid ?? 0)
+     orderTotal(row) -
+  Number(row.paid ?? 0)    
         ).toLocaleString("es-MX", {
           minimumFractionDigits: 2,
         })}{" "}
