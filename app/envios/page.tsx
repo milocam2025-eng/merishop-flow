@@ -190,6 +190,31 @@ async function updateShipmentStatus(
       : "Estado del envío actualizado."
   );
 }
+function trackingUrl(
+  carrier: string | null,
+  tracking: string | null
+) {
+  if (!tracking) return null;
+
+  const code = encodeURIComponent(tracking);
+
+  switch (carrier) {
+    case "USPS":
+      return `https://tools.usps.com/go/TrackConfirmAction?tLabels=${code}`;
+
+    case "UPS":
+      return `https://www.ups.com/track?loc=en_US&tracknum=${code}`;
+
+    case "FedEx":
+      return `https://www.fedex.com/fedextrack/?trknbr=${code}`;
+
+    case "DHL":
+      return `https://www.dhl.com/us-en/home/tracking.html?tracking-id=${code}`;
+
+    default:
+      return null;
+  }
+}
   const name = (id: string | null) => clients.find(c => c.id === id)?.name || "-";
 const shipmentClientName = (
   shipment: Shipment
@@ -288,11 +313,24 @@ const paidOrders = orders.filter((order) => {
       <td>
         {r.carrier || "-"}
       </td>
-
-      <td>
-        {r.tracking || "-"}
-      </td>
-
+<td>
+  {r.tracking && trackingUrl(r.carrier, r.tracking) ? (
+    <a
+      href={trackingUrl(r.carrier, r.tracking)!}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        color: "#2563eb",
+        fontWeight: 600,
+        textDecoration: "underline",
+      }}
+    >
+      {r.tracking}
+    </a>
+  ) : (
+    "-"
+  )}
+</td>
 <td>
   <select
     value={r.status}
