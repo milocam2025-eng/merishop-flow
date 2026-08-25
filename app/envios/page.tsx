@@ -257,7 +257,9 @@ if (!phone) {
     shipment.orders?.order_number || "tu pedido";
 
   const customerName =
-    shipment.orders?.customer_name || "cliente";
+  shipment.orders?.customer_name ||
+  client?.name ||
+  "cliente";
 
   const carrier =
     shipment.carrier || "la paquetería";
