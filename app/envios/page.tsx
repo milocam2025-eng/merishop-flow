@@ -168,24 +168,27 @@ async function updateShipmentStatus(
   newStatus: string
 ) {
   const s = createClient();
-const currentShipment = rows.find(
-  (row) => row.id === id
-);
 
-const shippedAt =
-  newStatus === "Enviado" &&
-  !currentShipment?.shipped_at
-    ? new Date().toISOString()
-    : currentShipment?.shipped_at || null;
+  const currentShipment = rows.find(
+    (row) => row.id === id
+  );
+
+  const shippedAt =
+    newStatus === "Enviado" &&
+    !currentShipment?.shipped_at
+      ? new Date().toISOString()
+      : currentShipment?.shipped_at || null;
+
   const deliveredAt =
     newStatus === "Entregado"
       ? new Date().toISOString()
-      : null;
+      : currentShipment?.delivered_at || null;
 
   const { error } = await s
     .from("shipments")
     .update({
       status: newStatus,
+      shipped_at: shippedAt,
       delivered_at: deliveredAt,
     })
     .eq("id", id);
@@ -199,17 +202,18 @@ const shippedAt =
   }
 
   setRows((current) =>
-  current.map((row) =>
-    row.id === id
-      ? {
-  ...row,
-  status: newStatus,
-  shipped_at: shippedAt,
-  delivered_at: deliveredAt,
-}         
-      : row
-  )
-);
+    current.map((row) =>
+      row.id === id
+        ? {
+            ...row,
+            status: newStatus,
+            shipped_at: shippedAt,
+            delivered_at: deliveredAt,
+          }
+        : row
+    )
+  );
+
   setMessage(
     newStatus === "Entregado"
       ? "Envío marcado como entregado."
