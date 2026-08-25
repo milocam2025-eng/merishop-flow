@@ -523,15 +523,53 @@ const paidOrders = orders.filter((order) => {
   </div>
 </td>
 <td>
-  <select
-    value={r.status}
-    onChange={(e) =>
-      updateShipmentStatus(
-        r.id,
-        e.target.value
-      )
-    }
-  >
+<select
+  value={r.status}
+  onChange={(e) =>
+    updateShipmentStatus(
+      r.id,
+      e.target.value
+    )
+  }
+  style={{
+    fontWeight: 700,
+    borderRadius: 10,
+    padding: "10px 12px",
+
+    background:
+      r.status === "Preparando"
+        ? "#fef3c7"
+        : r.status === "Enviado"
+        ? "#dbeafe"
+        : r.status === "En tránsito"
+        ? "#ede9fe"
+        : r.status === "Entregado"
+        ? "#dcfce7"
+        : "#f8fafc",
+
+    color:
+      r.status === "Preparando"
+        ? "#92400e"
+        : r.status === "Enviado"
+        ? "#1d4ed8"
+        : r.status === "En tránsito"
+        ? "#6d28d9"
+        : r.status === "Entregado"
+        ? "#166534"
+        : "#0f172a",
+
+    border:
+      r.status === "Preparando"
+        ? "1px solid #f59e0b"
+        : r.status === "Enviado"
+        ? "1px solid #60a5fa"
+        : r.status === "En tránsito"
+        ? "1px solid #a78bfa"
+        : r.status === "Entregado"
+        ? "1px solid #4ade80"
+        : "1px solid #dbe4ef",
+  }}
+> 
     <option value="Preparando">
       Preparando
     </option>
