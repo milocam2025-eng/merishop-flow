@@ -29,7 +29,9 @@ type Shipment = {
   carrier: string | null;
   tracking: string | null;
   status: string;
+  shipped_at: string | null;
   delivered_at: string | null;
+
 
   orders?: {
     order_number?: string | null;
@@ -166,7 +168,15 @@ async function updateShipmentStatus(
   newStatus: string
 ) {
   const s = createClient();
+const currentShipment = rows.find(
+  (row) => row.id === id
+);
 
+const shippedAt =
+  newStatus === "Enviado" &&
+  !currentShipment?.shipped_at
+    ? new Date().toISOString()
+    : currentShipment?.shipped_at || null;
   const deliveredAt =
     newStatus === "Entregado"
       ? new Date().toISOString()
@@ -192,10 +202,11 @@ async function updateShipmentStatus(
   current.map((row) =>
     row.id === id
       ? {
-          ...row,
-          status: newStatus,
-          delivered_at: deliveredAt,
-        }
+  ...row,
+  status: newStatus,
+  shipped_at: shippedAt,
+  delivered_at: deliveredAt,
+}         
       : row
   )
 );
