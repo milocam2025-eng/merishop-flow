@@ -460,6 +460,7 @@ const paidOrders = orders.filter((order) => {
       <th>Paquetería</th>
       <th>Rastreo</th>
       <th>Estado</th>
+      <th>Fecha envío</th>
       <th>Fecha entrega</th>
       <th>Acciones</th>
     </tr>
@@ -544,7 +545,15 @@ const paidOrders = orders.filter((order) => {
     </option>
   </select>
 </td>
-      <td>
+<td>
+  {r.shipped_at
+    ? new Date(r.shipped_at).toLocaleString("es-MX", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : "-"}
+</td>    
+  <td>
   {r.delivered_at
     ? new Date(r.delivered_at).toLocaleString(
         "es-MX",
