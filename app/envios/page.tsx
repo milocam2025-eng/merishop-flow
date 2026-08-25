@@ -205,6 +205,42 @@ async function updateShipmentStatus(
       : "Estado del envío actualizado."
   );
 }
+async function updateShipmentTracking(
+  id: string,
+  tracking: string
+) {
+  const s = createClient();
+
+  const cleanTracking = tracking.trim();
+
+  const { error } = await s
+    .from("shipments")
+    .update({
+      tracking: cleanTracking || null,
+    })
+    .eq("id", id);
+
+  if (error) {
+    setMessage(
+      "Error al actualizar el rastreo: " +
+        error.message
+    );
+    return;
+  }
+
+  setRows((current) =>
+    current.map((row) =>
+      row.id === id
+        ? {
+            ...row,
+            tracking: cleanTracking || null,
+          }
+        : row
+    )
+  );
+
+  setMessage("Número de rastreo actualizado.");
+}
 function trackingUrl(
   carrier: string | null,
   tracking: string | null
@@ -436,22 +472,39 @@ const paidOrders = orders.filter((order) => {
         {r.carrier || "-"}
       </td>
 <td>
-  {r.tracking && trackingUrl(r.carrier, r.tracking) ? (
-    <a
-      href={trackingUrl(r.carrier, r.tracking)!}
-      target="_blank"
-      rel="noopener noreferrer"
+  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+    <input
+      type="text"
+      defaultValue={r.tracking ?? ""}
+      placeholder="Número de rastreo"
+      onBlur={(e) =>
+        updateShipmentTracking(
+          r.id,
+          e.target.value
+        )
+      }
       style={{
-        color: "#2563eb",
-        fontWeight: 600,
-        textDecoration: "underline",
+        width: "170px",
+        padding: "8px 10px",
+        border: "1px solid #d7dee8",
+        borderRadius: "8px",
       }}
-    >
-      {r.tracking}
-    </a>
-  ) : (
-    "-"
-  )}
+    />
+
+    {r.tracking && (
+      <a
+        href={trackingUrl(r.carrier, r.tracking) ?? undefined}
+        target="_blank"
+        rel="noreferrer"
+        style={{
+          fontWeight: 700,
+          whiteSpace: "nowrap",
+        }}
+      >
+        Rastrear
+      </a>
+    )}
+  </div>
 </td>
 <td>
   <select
