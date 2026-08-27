@@ -574,9 +574,151 @@ const orderTotal = (order: Order) => {
 
   return Number(order.total || 0);
 };
-  return (
+
+/* ==============================
+   RESUMEN DEL MÓDULO PEDIDOS
+================================ */
+
+const totalOrders = rows.length;
+
+const activeOrders = rows.filter(
+  (order) =>
+    order.status !== "Cancelado" &&
+    order.status !== "Pagado"
+).length;
+
+const paidOrders = rows.filter(
+  (order) => order.status === "Pagado"
+).length;
+
+const pendingBalance = rows.reduce(
+  (sum, order) => {
+    if (order.status === "Cancelado") {
+      return sum;
+    }
+
+    const total = orderTotal(order);
+    const paid = Number(order.paid || 0);
+
+    return sum + Math.max(0, total - paid);
+  },
+  0
+);
+
+const money = (value: number) =>
+  value.toLocaleString("es-MX", {
+    style: "currency",
+    currency: "MXN",
+  });
+
+return (
     <AuthGuard>
-      <AppShell title="Pedidos">
+<AppShell
+  title="Pedidos"
+  subtitle="Controla pedidos, pagos y saldos desde un solo lugar."
+  headerExtra={
+    <div
+      style={{
+        display: "flex",
+        gap: 12,
+        flexWrap: "wrap",
+        justifyContent: "flex-end",
+      }}
+    >
+      <div
+        style={{
+          padding: "10px 14px",
+          borderRadius: 12,
+          background: "#ffffff",
+          border: "1px solid #dbe4ef",
+          minWidth: 105,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 12,
+            opacity: 0.65,
+          }}
+        >
+          Pedidos
+        </div>
+
+        <strong style={{ fontSize: 18 }}>
+          {totalOrders}
+        </strong>
+      </div>
+
+      <div
+        style={{
+          padding: "10px 14px",
+          borderRadius: 12,
+          background: "#ffffff",
+          border: "1px solid #dbe4ef",
+          minWidth: 105,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 12,
+            opacity: 0.65,
+          }}
+        >
+          Activos
+        </div>
+
+        <strong style={{ fontSize: 18 }}>
+          {activeOrders}
+        </strong>
+      </div>
+
+      <div
+        style={{
+          padding: "10px 14px",
+          borderRadius: 12,
+          background: "#ffffff",
+          border: "1px solid #dbe4ef",
+          minWidth: 105,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 12,
+            opacity: 0.65,
+          }}
+        >
+          Pagados
+        </div>
+
+        <strong style={{ fontSize: 18 }}>
+          {paidOrders}
+        </strong>
+      </div>
+
+      <div
+        style={{
+          padding: "10px 14px",
+          borderRadius: 12,
+          background: "#ffffff",
+          border: "1px solid #dbe4ef",
+          minWidth: 155,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 12,
+            opacity: 0.65,
+          }}
+        >
+          Saldo pendiente
+        </div>
+
+        <strong style={{ fontSize: 18 }}>
+          {money(pendingBalance)}
+        </strong>
+      </div>
+    </div>
+  }
+>    
         <section className="panel">
           <h2>Nuevo pedido</h2>
           <form className="form-grid" onSubmit={submit}>
