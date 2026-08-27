@@ -1,5 +1,7 @@
 "use client";
 
+
+"use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -23,9 +25,13 @@ const navigation = [
 ];
 export default function AppShell({
   title,
+  subtitle = "Administración de MeriShop",
+  headerExtra,
   children,
 }: Readonly<{
   title: string;
+  subtitle?: string;
+  headerExtra?: React.ReactNode;
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
@@ -129,15 +135,19 @@ export default function AppShell({
 
             <div>
               <h1>{title}</h1>
-              <p>
-                Administración de MeriShop
-              </p>
+              
+              <p>{subtitle}</p>
+             
             </div>
           </div>
 
-          <div className="topbar-pill">
-            MeriShop Flow Pro
-          </div>
+          {headerExtra ? (
+  <div>{headerExtra}</div>
+) : (
+  <div className="topbar-pill">
+    MeriShop Flow Pro
+  </div>
+)}
         </header>
 
         {children}

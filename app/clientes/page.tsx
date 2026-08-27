@@ -79,16 +79,131 @@ export default function ClientesPage() {
     load();
   }
 
-  async function remove(id: string) {
-    if (!confirm("¿Eliminar este cliente?")) return;
-    const { error } = await createClient().from("clients").delete().eq("id", id);
-    if (error) setMessage(error.message);
-    else load();
-  }
+async function remove(id: string) {
+  if (!confirm("¿Eliminar este cliente?")) return;
+  const { error } = await createClient()
+    .from("clients")
+    .delete()
+    .eq("id", id);
 
-  return (
-    <AuthGuard>
-      <AppShell title="Clientes">
+  if (error) setMessage(error.message);
+  else load();
+}
+
+/* ==============================
+   RESUMEN DEL MÓDULO CLIENTES
+================================ */
+
+const totalClients = rows.length;
+
+const totalPurchases = rows.reduce(
+  (sum, row) =>
+    sum + Number(row.total_purchases || 0),
+  0
+);
+
+const totalPaid = rows.reduce(
+  (sum, row) =>
+    sum + Number(row.total_paid || 0),
+  0
+);
+
+const totalBalance = rows.reduce(
+  (sum, row) =>
+    sum + Number(row.balance_due || 0),
+  0
+);
+
+const money = (value: number) =>
+  value.toLocaleString("es-MX", {
+    style: "currency",
+    currency: "MXN",
+  });
+
+return (
+  <AuthGuard>  
+      <AppShell
+  title="Clientes"
+  subtitle="Gestiona clientes, compras y saldos desde un solo lugar."
+  headerExtra={
+    <div
+      style={{
+        display: "flex",
+        gap: 12,
+        flexWrap: "wrap",
+        justifyContent: "flex-end",
+      }}
+    >
+      <div
+        style={{
+          padding: "10px 14px",
+          borderRadius: 12,
+          background: "#ffffff",
+          border: "1px solid #dbe4ef",
+          minWidth: 110,
+        }}
+      >
+        <div style={{ fontSize: 12, opacity: 0.65 }}>
+          Clientes
+        </div>
+        <strong style={{ fontSize: 18 }}>
+          {totalClients}
+        </strong>
+      </div>
+
+      <div
+        style={{
+          padding: "10px 14px",
+          borderRadius: 12,
+          background: "#ffffff",
+          border: "1px solid #dbe4ef",
+          minWidth: 140,
+        }}
+      >
+        <div style={{ fontSize: 12, opacity: 0.65 }}>
+          Compras
+        </div>
+        <strong style={{ fontSize: 18 }}>
+          {money(totalPurchases)}
+        </strong>
+      </div>
+
+      <div
+        style={{
+          padding: "10px 14px",
+          borderRadius: 12,
+          background: "#ffffff",
+          border: "1px solid #dbe4ef",
+          minWidth: 140,
+        }}
+      >
+        <div style={{ fontSize: 12, opacity: 0.65 }}>
+          Pagado
+        </div>
+        <strong style={{ fontSize: 18 }}>
+          {money(totalPaid)}
+        </strong>
+      </div>
+
+      <div
+        style={{
+          padding: "10px 14px",
+          borderRadius: 12,
+          background: "#ffffff",
+          border: "1px solid #dbe4ef",
+          minWidth: 150,
+        }}
+      >
+        <div style={{ fontSize: 12, opacity: 0.65 }}>
+          Saldo pendiente
+        </div>
+        <strong style={{ fontSize: 18 }}>
+          {money(totalBalance)}
+        </strong>
+      </div>
+    </div>
+  }
+>
         <section className="panel">
           <div className="section-title">
             <div><h2>Nuevo cliente</h2><p>Agrega información básica y contacto.</p></div>
