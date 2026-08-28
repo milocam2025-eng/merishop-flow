@@ -149,28 +149,19 @@ useEffect(() => {
   };
 }, []);
 
-  const categories =
-    useMemo(() => {
-      const values =
-        products
-          .map(
-            (item) =>
-              item.category
-          )
-          .filter(
-            (
-              value
-            ): value is string =>
-              Boolean(value)
-          );
+  const categories = useMemo(() => {
+  const values = products
+    .map((item) => item.category?.trim())
+    .filter(
+      (value): value is string =>
+        Boolean(value)
+    );
 
-      return [
-        "Todos",
-        ...Array.from(
-          new Set(values)
-        ),
-      ];
-    }, [products]);
+  return [
+    "Todos",
+    ...Array.from(new Set(values)),
+  ];
+}, [products]);
 
   const filteredProducts =
     useMemo(() => {

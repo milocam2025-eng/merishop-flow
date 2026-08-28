@@ -1268,7 +1268,7 @@ return (
 
     {/* VER PRODUCTO EN LA TIENDA */}
     <Link
-      href={`/tienda?producto=${row.id}`}
+     href={`/tienda/${row.id}`}
       target="_blank"
       style={{
         display: "inline-flex",
