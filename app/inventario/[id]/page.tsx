@@ -855,7 +855,30 @@ function updateField<K extends keyof Product>(
     };
   });
 }
+function updateNumberField(
+  field:
+    | "quantity"
+    | "minimum_stock"
+    | "cost_usd"
+    | "tax_rate"
+    | "shipping_usd"
+    | "commission_percent"
+    | "exchange_rate"
+    | "sale_price_mxn",
+  value: string
+) {
+  setForm((current) => {
+    if (!current) return current;
 
+    return {
+      ...current,
+      [field]:
+        value === ""
+          ? ("" as unknown as number)
+          : Number(value),
+    };
+  });
+}
   async function save(
     event: FormEvent<HTMLFormElement>
   ) {
@@ -2143,12 +2166,10 @@ onClick={() => uploadGalleryImage()}
                     form.cost_usd
                   }
                   onChange={(e) =>
-                    updateField(
+                    updateNumberField(
                       "cost_usd",
-                      Number(
-                        e.target.value
+                      e.target.value
                       )
-                    )
                   }
                 />
               </label>
@@ -2163,12 +2184,7 @@ onClick={() => uploadGalleryImage()}
                     form.tax_rate
                   }
                   onChange={(e) =>
-                    updateField(
-                      "tax_rate",
-                      Number(
-                        e.target.value
-                      )
-                    )
+                      updateNumberField("tax_rate", e.target.value)
                   }
                 />
               </label>
@@ -2183,11 +2199,9 @@ onClick={() => uploadGalleryImage()}
                     form.shipping_usd
                   }
                   onChange={(e) =>
-                    updateField(
+                    updateNumberField(
                       "shipping_usd",
-                      Number(
                         e.target.value
-                      )
                     )
                   }
                 />
@@ -2203,11 +2217,9 @@ onClick={() => uploadGalleryImage()}
                     form.commission_percent
                   }
                   onChange={(e) =>
-                    updateField(
+                    updateNumberField(
                       "commission_percent",
-                      Number(
                         e.target.value
-                      )
                     )
                   }
                 />
@@ -2223,11 +2235,9 @@ onClick={() => uploadGalleryImage()}
                     form.exchange_rate
                   }
                   onChange={(e) =>
-                    updateField(
+                    updateNumberField(
                       "exchange_rate",
-                      Number(
                         e.target.value
-                      )
                     )
                   }
                 />
@@ -2243,11 +2253,9 @@ onClick={() => uploadGalleryImage()}
                     form.sale_price_mxn
                   }
                   onChange={(e) =>
-                    updateField(
+                    updateNumberField(
                       "sale_price_mxn",
-                      Number(
                         e.target.value
-                      )
                     )
                   }
                 />
