@@ -807,10 +807,6 @@ async function moveImageByDrag(
       form.exchange_rate || 0
     );
 
-  const salePriceMxn =
-    Number(
-      form.sale_price_mxn || 0
-    );
 
   const taxUsd =
     costUsd *
@@ -820,27 +816,38 @@ async function moveImageByDrag(
     costUsd *
     (commissionPercent / 100);
 
-  const totalCostUsd =
-    costUsd +
-    taxUsd +
-    shippingUsd +
-    commissionUsd;
+// COSTO REAL DEL PRODUCTO
+// Compra + Tax + Envío
+const baseCostUsd =
+  costUsd +
+  taxUsd +
+  shippingUsd;
 
-  const totalCostMxn =
-    totalCostUsd *
-    exchangeRate;
+// Costo real convertido a MXN
+const baseCostMxn =
+  baseCostUsd *
+  exchangeRate;
 
-  const profitMxn =
-    salePriceMxn -
-    totalCostMxn;
+// Comisión MeriShop convertida a MXN
+const commissionMxn =
+  commissionUsd *
+  exchangeRate;
 
-  const profitPercent =
-    totalCostMxn > 0
-      ? (profitMxn /
-          totalCostMxn) *
-        100
-      : 0;
+// PRECIO FINAL ESTIMADO
+// Costo real + comisión MeriShop
+const estimatedSalePriceMxn =
+  baseCostMxn +
+  commissionMxn;
 
+// La ganancia de MeriShop es la comisión
+const profitMxn =
+  commissionMxn;
+
+// Porcentaje real de ganancia sobre el costo
+const profitPercent =
+  baseCostMxn > 0
+    ? (profitMxn / baseCostMxn) * 100
+    : 0;
 
 function updateField<K extends keyof Product>(
   field: K,
@@ -964,13 +971,13 @@ if (!form) {
         exchangeRate,
 
       total_cost_usd:
-        totalCostUsd,
+  baseCostUsd,
 
-      total_cost_mxn:
-        totalCostMxn,
+total_cost_mxn:
+  baseCostMxn,
 
       sale_price_mxn:
-        salePriceMxn,
+       estimatedSalePriceMxn,
 
       profit_mxn:
         profitMxn,
@@ -2243,23 +2250,21 @@ onClick={() => uploadGalleryImage()}
                 />
               </label>
 
-              <label>
-                Precio venta MXN
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={
-                    form.sale_price_mxn
-                  }
-                  onChange={(e) =>
-                    updateNumberField(
-                      "sale_price_mxn",
-                        e.target.value
-                    )
-                  }
-                />
-              </label>
+             <label>
+  Precio venta estimado MXN
+
+  <input
+    type="number"
+    min="0"
+    step="0.01"
+    value={estimatedSalePriceMxn.toFixed(2)}
+    readOnly
+    style={{
+      background: "#f1f5f9",
+      fontWeight: 700,
+    }}
+  />
+</label>
             </div>
 
             <div
@@ -2283,7 +2288,7 @@ onClick={() => uploadGalleryImage()}
               </p>
 
               <p>
-                Comisión USD:{" "}
+                Comisión MeriShop USD:{" "}
                 <strong>
                   $
                   {commissionUsd.toFixed(
@@ -2293,27 +2298,27 @@ onClick={() => uploadGalleryImage()}
               </p>
 
               <p>
-                Costo total USD:{" "}
+                Costo real USD:{" "}
                 <strong>
                   $
-                  {totalCostUsd.toFixed(
-                    2
-                  )}
+                                 {baseCostUsd.toFixed(
+                                     2
+                                     )}
                 </strong>
               </p>
 
               <p>
-                Costo total MXN:{" "}
+                Costo real MXN:{" "}
                 <strong>
                   $
-                  {totalCostMxn.toFixed(
-                    2
-                  )}
+                  {baseCostMxn.toFixed(
+                                             2
+                                        )}
                 </strong>
               </p>
 
               <p>
-                Ganancia:{" "}
+                Ganancia MeriShop:{" "}
                 <strong>
                   $
                   {profitMxn.toFixed(
