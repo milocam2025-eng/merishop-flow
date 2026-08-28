@@ -1,28 +1,69 @@
-"use client";
-
 
 "use client";
+
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-const navigation = [
-  { href: "/dashboard", label: "Inicio", icon: "⌂" },
-  { href: "/clientes", label: "Clientes", icon: "👥" },
-  { href: "/pedidos", label: "Pedidos", icon: "🛍️" },
-  { href: "/inventario", label: "Inventario", icon: "📦" },
+type NavigationItem = {
+  href: string;
+  label: string;
+  icon: string;
+  external?: boolean;
+};
+
+const navigation: NavigationItem[] = [
+  {
+    href: "/dashboard",
+    label: "Inicio",
+    icon: "⌂",
+  },
+  {
+    href: "/clientes",
+    label: "Clientes",
+    icon: "👥",
+  },
+  {
+    href: "/pedidos",
+    label: "Pedidos",
+    icon: "🛍️",
+  },
+  {
+    href: "/inventario",
+    label: "Inventario",
+    icon: "📦",
+  },
+
+  // TIENDA MERISHOP
+  {
+    href: "https://merishop-flow.vercel.app/tienda",
+    label: "Mi Tienda",
+    icon: "🏪",
+   },
 
   {
     href: "/publicar",
     label: "Publicar",
     icon: "📲",
   },
-
-  { href: "/pagos", label: "Pagos", icon: "💳" },
-  { href: "/envios", label: "Envíos", icon: "🚚" },
-  { href: "/reportes", label: "Reportes", icon: "📊" },
+  {
+    href: "/pagos",
+    label: "Pagos",
+    icon: "💳",
+  },
+  {
+    href: "/envios",
+    label: "Envíos",
+    icon: "🚚",
+  },
+  {
+    href: "/reportes",
+    label: "Reportes",
+    icon: "📊",
+  },
 ];
+
 export default function AppShell({
   title,
   subtitle = "Administración de MeriShop",
@@ -88,21 +129,50 @@ export default function AppShell({
         </div>
 
         <nav>
-          {navigation.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={closeMobileMenu}
-              className={
-                pathname === item.href
-                  ? "active"
-                  : ""
-              }
-            >
-              <span>{item.icon}</span>
-              {item.label}
-            </Link>
-          ))}
+          {navigation.map((item) => {
+            // ENLACE EXTERNO - TIENDA
+            if (item.external) {
+              return (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={closeMobileMenu}
+                  className="store-link"
+                >
+                  <span>{item.icon}</span>
+                  {item.label}
+                  <span
+                    style={{
+                      marginLeft: "auto",
+                      fontSize: "12px",
+                      opacity: 0.7,
+                    }}
+                  >
+                    ↗
+                  </span>
+                </a>
+              );
+            }
+
+            // ENLACES INTERNOS
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={closeMobileMenu}
+                className={
+                  pathname === item.href
+                    ? "active"
+                    : ""
+                }
+              >
+                <span>{item.icon}</span>
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="sidebar-footer">
@@ -135,19 +205,17 @@ export default function AppShell({
 
             <div>
               <h1>{title}</h1>
-              
               <p>{subtitle}</p>
-             
             </div>
           </div>
 
           {headerExtra ? (
-  <div>{headerExtra}</div>
-) : (
-  <div className="topbar-pill">
-    MeriShop Flow Pro
-  </div>
-)}
+            <div>{headerExtra}</div>
+          ) : (
+            <div className="topbar-pill">
+              MeriShop Flow Pro
+            </div>
+          )}
         </header>
 
         {children}

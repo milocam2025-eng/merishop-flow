@@ -450,7 +450,88 @@ await load();
 
   return (
 <AuthGuard>
-  <AppShell title="Inventario">
+  <AppShell
+  title="Inventario"
+  subtitle="Control de productos, existencias, costos y rentabilidad."
+  headerExtra={
+    <div
+      style={{
+        display: "flex",
+        gap: 12,
+        flexWrap: "wrap",
+        justifyContent: "flex-end",
+      }}
+    >
+      <div
+        style={{
+          padding: "10px 14px",
+          borderRadius: 12,
+          background: "#ffffff",
+          border: "1px solid #dbe4ef",
+          minWidth: 110,
+        }}
+      >
+        <div style={{ fontSize: 12, opacity: 0.65 }}>
+          Artículos
+        </div>
+        <strong style={{ fontSize: 18 }}>
+          {filtered.length}
+        </strong>
+      </div>
+
+      <div
+        style={{
+          padding: "10px 14px",
+          borderRadius: 12,
+          background: "#ffffff",
+          border: "1px solid #dbe4ef",
+          minWidth: 110,
+        }}
+      >
+        <div style={{ fontSize: 12, opacity: 0.65 }}>
+          Unidades
+        </div>
+        <strong style={{ fontSize: 18 }}>
+          {units}
+        </strong>
+      </div>
+
+      <div
+        style={{
+          padding: "10px 14px",
+          borderRadius: 12,
+          background: "#ffffff",
+          border: "1px solid #dbe4ef",
+          minWidth: 145,
+        }}
+      >
+        <div style={{ fontSize: 12, opacity: 0.65 }}>
+          Valor inventario
+        </div>
+        <strong style={{ fontSize: 18 }}>
+          {money(inventoryValue)}
+        </strong>
+      </div>
+
+      <div
+        style={{
+          padding: "10px 14px",
+          borderRadius: 12,
+          background: "#ffffff",
+          border: "1px solid #dbe4ef",
+          minWidth: 145,
+        }}
+      >
+        <div style={{ fontSize: 12, opacity: 0.65 }}>
+          Ganancia potencial
+        </div>
+        <strong style={{ fontSize: 18 }}>
+          {money(potentialProfit)}
+        </strong>
+      </div>
+    </div>
+  }
+>
         <section className="panel">
           <div className="section-title">
             <div>
@@ -1059,7 +1140,7 @@ await load();
                   <th>Venta MXN</th>
                   <th>Ganancia</th>
                   <th>Estado</th>
-                  <th></th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
 
@@ -1131,15 +1212,100 @@ return (
     </div>
   </td><td>
     <StatusBadge value={row.status} />
-  </td><td>
+  </td>
+
+ <td>
+  <div
+    style={{
+      display: "flex",
+      gap: 8,
+      alignItems: "center",
+      flexWrap: "wrap",
+      minWidth: 320,
+    }}
+  >
+    {/* EDITAR PRODUCTO */}
+    <Link
+      href={`/inventario/${row.id}`}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        padding: "8px 10px",
+        borderRadius: 8,
+        background: "#eff6ff",
+        color: "#1d4ed8",
+        textDecoration: "none",
+        fontSize: 13,
+        fontWeight: 600,
+        border: "1px solid #bfdbfe",
+        whiteSpace: "nowrap",
+      }}
+    >
+      ✏️ Editar
+    </Link>
+
+    {/* PUBLICAR PRODUCTO */}
+    <Link
+      href={`/publicar?producto=${row.id}`}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        padding: "8px 10px",
+        borderRadius: 8,
+        background: "#f0fdf4",
+        color: "#15803d",
+        textDecoration: "none",
+        fontSize: 13,
+        fontWeight: 600,
+        border: "1px solid #bbf7d0",
+        whiteSpace: "nowrap",
+      }}
+    >
+      📲 Publicar
+    </Link>
+
+    {/* VER PRODUCTO EN LA TIENDA */}
+    <Link
+      href={`/tienda?producto=${row.id}`}
+      target="_blank"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        padding: "8px 10px",
+        borderRadius: 8,
+        background: "#fff7ed",
+        color: "#c2410c",
+        textDecoration: "none",
+        fontSize: 13,
+        fontWeight: 600,
+        border: "1px solid #fed7aa",
+        whiteSpace: "nowrap",
+      }}
+    >
+      🏪 Ver en tienda
+    </Link>
+
+    {/* ELIMINAR PRODUCTO */}
     <button
       className="danger"
       type="button"
       onClick={() => remove(row.id)}
+      style={{
+        padding: "8px 10px",
+        borderRadius: 8,
+        fontSize: 13,
+        whiteSpace: "nowrap",
+      }}
     >
-      Eliminar
+      🗑️ Eliminar
     </button>
-  </td></tr>
+  </div>
+</td>
+
+</tr>
 );
           })}
         </tbody>
