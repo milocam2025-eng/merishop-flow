@@ -325,6 +325,31 @@ const url =
             "30px 20px 60px",
         }}
       >
+  {/* VOLVER A INVENTARIO */}
+
+  <div
+    style={{
+      marginBottom: 20,
+    }}
+  >
+    <Link
+      href="/inventario"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "11px 18px",
+        borderRadius: 10,
+        background: "#0f355d",
+        color: "#ffffff",
+        textDecoration: "none",
+        fontWeight: 700,
+      }}
+    >
+      ← Volver a Inventario
+    </Link>
+  </div>
+
         {/* BUSCADOR */}
 
         <input
