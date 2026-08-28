@@ -376,14 +376,18 @@ const url =
                     item
                       ? "2px solid #2563eb"
                       : "1px solid #cbd5e1",
-                  background:
-                    category ===
-                    item
-                      ? "#dbeafe"
-                      : "#ffffff",
-                  fontWeight: 700,
-                  cursor:
-                    "pointer",
+background:
+  category === item
+    ? "#dbeafe"
+    : "#ffffff",
+
+color:
+  category === item
+    ? "#1d4ed8"
+    : "#334155",
+
+fontWeight: 700,
+cursor: "pointer",                
                 }}
               >
                 {item}
