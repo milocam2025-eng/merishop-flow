@@ -807,6 +807,10 @@ async function moveImageByDrag(
       form.exchange_rate || 0
     );
 
+  const finalSalePriceMxn =
+  Number(
+    form.sale_price_mxn || 0
+    );
 
   const taxUsd =
     costUsd *
@@ -841,7 +845,9 @@ const estimatedSalePriceMxn =
 
 // La ganancia de MeriShop es la comisión
 const profitMxn =
-  commissionMxn;
+  finalSalePriceMxn > 0
+    ? finalSalePriceMxn - baseCostMxn
+    : commissionMxn;
 
 // Porcentaje real de ganancia sobre el costo
 const profitPercent =
@@ -976,8 +982,10 @@ if (!form) {
 total_cost_mxn:
   baseCostMxn,
 
-      sale_price_mxn:
-       estimatedSalePriceMxn,
+   sale_price_mxn:
+  finalSalePriceMxn > 0
+    ? finalSalePriceMxn
+    : estimatedSalePriceMxn,
 
       profit_mxn:
         profitMxn,
@@ -2249,23 +2257,48 @@ onClick={() => uploadGalleryImage()}
                   }
                 />
               </label>
+<div
+  style={{
+    display: "grid",
+    gap: 16,
+  }}
+>
+  <label>
+    Precio mínimo sugerido MXN
 
-             <label>
-  Precio venta estimado MXN
+    <input
+      type="number"
+      value={estimatedSalePriceMxn.toFixed(2)}
+      readOnly
+      style={{
+        background: "#f1f5f9",
+        fontWeight: 700,
+      }}
+    />
+  </label>
 
-  <input
-    type="number"
-    min="0"
-    step="0.01"
-    value={estimatedSalePriceMxn.toFixed(2)}
-    readOnly
-    style={{
-      background: "#f1f5f9",
-      fontWeight: 700,
-    }}
-  />
-</label>
-            </div>
+  <label>
+    Precio final de venta MXN
+
+    <input
+      type="number"
+      min="0"
+      step="0.01"
+      value={form.sale_price_mxn}
+      onChange={(e) =>
+        updateNumberField(
+          "sale_price_mxn",
+          e.target.value
+        )
+      }
+      placeholder={estimatedSalePriceMxn.toFixed(2)}
+      style={{
+        fontWeight: 700,
+      }}
+    />
+  </label>
+</div>
+             </div>
 
             <div
               className="panel"
