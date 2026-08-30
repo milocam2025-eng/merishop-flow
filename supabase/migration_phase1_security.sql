@@ -157,6 +157,87 @@ begin
 end;
 $$;
 
+create or replace function public.list_store_products()
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'id', i.id,
+        'product', i.product,
+        'brand', i.brand,
+        'category', i.category,
+        'size', i.size,
+        'image_url', i.image_url,
+        'sale_price_mxn', i.sale_price_mxn,
+        'quantity', i.quantity,
+        'status', i.status
+      )
+      order by i.created_at desc
+    ),
+    '[]'::jsonb
+  )
+  from public.inventory i
+  where i.status in ('Disponible', 'Stock bajo')
+    and coalesce(i.quantity, 0) > 0;
+$$;
+
+create or replace function public.get_store_product(
+  p_inventory_id uuid
+)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select jsonb_build_object(
+    'id', i.id,
+    'product', i.product,
+    'brand', i.brand,
+    'category', i.category,
+    'size', i.size,
+    'color', i.color,
+    'image_url', i.image_url,
+    'sale_price_mxn', i.sale_price_mxn,
+    'quantity', i.quantity,
+    'status', i.status
+  )
+  from public.inventory i
+  where i.id = p_inventory_id
+    and i.status in ('Disponible', 'Stock bajo')
+    and coalesce(i.quantity, 0) > 0;
+$$;
+
+create or replace function public.list_store_product_images(
+  p_inventory_id uuid
+)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'id', ii.id,
+        'image_url', ii.image_url,
+        'sort_order', ii.sort_order,
+        'is_primary', ii.is_primary
+      )
+      order by ii.sort_order asc
+    ),
+    '[]'::jsonb
+  )
+  from public.inventory_images ii
+  where ii.inventory_id = p_inventory_id;
+$$;
+
 create or replace function public.cancel_order_and_restore_inventory(
   p_order_id uuid
 )
@@ -256,10 +337,24 @@ $$;
 revoke all on function public.create_store_order(text, text, jsonb) from public;
 grant execute on function public.create_store_order(text, text, jsonb) to anon, authenticated;
 
+revoke all on function public.list_store_products() from public;
+grant execute on function public.list_store_products() to anon, authenticated;
+
+revoke all on function public.get_store_product(uuid) from public;
+grant execute on function public.get_store_product(uuid) to anon, authenticated;
+
+revoke all on function public.list_store_product_images(uuid) from public;
+grant execute on function public.list_store_product_images(uuid) to anon, authenticated;
+
 revoke all on function public.cancel_order_and_restore_inventory(uuid) from public;
 grant execute on function public.cancel_order_and_restore_inventory(uuid) to authenticated;
 
 -- El carrito público ya no debe insertar pedidos directamente.
 revoke insert on table public.orders from public, anon;
+drop policy if exists orders_public_insert on public.orders;
+
+-- La tienda pública solo puede leer las columnas expuestas por las funciones anteriores.
+revoke select on table public.inventory from public, anon;
+revoke select on table public.inventory_images from public, anon;
 
 commit;
