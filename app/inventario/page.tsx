@@ -672,13 +672,14 @@ await load();
   </div>
 
   <div
-    style={{
-      display: "flex",
-      gap: 10,
-      marginBottom: 12,
-      flexWrap: "wrap",
-    }}
-  >
+  style={{
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) auto",
+    gap: 10,
+    marginBottom: 12,
+    alignItems: "stretch",
+  }}
+>
     <input
       type="text"
       value={form.category}
@@ -689,10 +690,10 @@ await load();
         })
       }
       placeholder="Ej. Juguetes, Electrónica..."
-      style={{
-        flex: 1,
-        minWidth: 220,
-      }}
+style={{
+  width: "100%",
+  minWidth: 0,
+}}      
     />
 
     <button
