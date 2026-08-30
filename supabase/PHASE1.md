@@ -16,8 +16,10 @@ Ejecutar `migration_phase1_security.sql` una sola vez en Supabase SQL Editor. La
 
 - `orders.inventory_reserved` para distinguir pedidos que ya descontaron existencias.
 - `create_store_order(...)`, que valida el carrito, bloquea filas de inventario, usa precios reales, descuenta existencias y crea el pedido de forma atómica.
+- Funciones públicas de catálogo que exponen únicamente nombre, marca, categoría, talla, color, fotografía, precio de venta, cantidad y estado; nunca costos internos ni `user_id`.
 - `cancel_order_and_restore_inventory(...)`, que cancela y repone existencias en una sola transacción.
-- Restricción para impedir que `anon` inserte directamente en `orders`.
+- Eliminación de `orders_public_insert` y restricción para impedir que `anon` inserte directamente en `orders`.
+- Bloqueo de lectura directa anónima sobre `inventory` e `inventory_images`; la tienda utiliza funciones con una lista explícita de columnas seguras.
 
 ## Pruebas obligatorias antes de publicar
 
