@@ -1,5 +1,6 @@
--- MeriShop Flow Pro - Fase 1: seguridad e integridad del carrito
--- Revisar en un entorno de prueba antes de ejecutar en producción.
+-- MeriShop Flow Pro - Fase 1, paso A: preparar funciones seguras
+-- Compatible con la versión anterior de la aplicación.
+-- Ejecutar antes de desplegar el código de la rama phase-1-security.
 
 begin;
 
@@ -348,13 +349,5 @@ grant execute on function public.list_store_product_images(uuid) to anon, authen
 
 revoke all on function public.cancel_order_and_restore_inventory(uuid) from public;
 grant execute on function public.cancel_order_and_restore_inventory(uuid) to authenticated;
-
--- El carrito público ya no debe insertar pedidos directamente.
-revoke insert on table public.orders from public, anon;
-drop policy if exists orders_public_insert on public.orders;
-
--- La tienda pública solo puede leer las columnas expuestas por las funciones anteriores.
-revoke select on table public.inventory from public, anon;
-revoke select on table public.inventory_images from public, anon;
 
 commit;
