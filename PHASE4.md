@@ -4,10 +4,10 @@ Esta fase protege los recorridos principales del cliente y el acceso administrat
 
 ## Cobertura
 
-- Carga del catálogo público usando una respuesta controlada de Supabase.
-- Búsqueda y navegación al detalle de un producto.
-- Agregar un producto al carrito y comprobar el total.
-- Redirección de visitantes sin sesión desde Inventario hacia Login.
+- Carga de la tienda pública, buscador y navegación al carrito.
+- Restauración del carrito desde el navegador.
+- Actualización de cantidades y cálculo del total.
+- Disponibilidad del formulario de acceso administrativo.
 
 Las pruebas no crean pedidos, no modifican inventario y no utilizan la base de datos de producción.
 
