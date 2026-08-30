@@ -30,3 +30,13 @@ test("the admin login form remains available", async ({ page }) => {
   await expect(page.getByLabel("Contraseña", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Iniciar sesión" })).toBeVisible();
 });
+
+test("health and missing-page responses are controlled", async ({ page, request }) => {
+  const health = await request.get("/api/health");
+  expect(health.ok()).toBeTruthy();
+  await expect(health.json()).resolves.toMatchObject({ status: "ok", service: "merishop-flow" });
+
+  await page.goto("/ruta-que-no-existe");
+  await expect(page.getByRole("heading", { name: "Página no encontrada" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Ir a MeriShop" })).toBeVisible();
+});
