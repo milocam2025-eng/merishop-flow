@@ -7,6 +7,7 @@ import AuthGuard from "@/components/AuthGuard";
 import StatusBadge from "@/components/StatusBadge";
 import HeaderMetrics from "@/components/HeaderMetrics";
 import { formatMXN, formatUSD, numberValue } from "@/lib/formatters";
+import { validateInventory } from "@/lib/inventory-validation";
 import { createClient } from "@/lib/supabase/client";
 
 type InventoryRow = {
@@ -246,8 +247,19 @@ function saveCurrentCategory() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!form.product.trim()) {
-      setMessage("Escribe el nombre del producto.");
+    const validation = validateInventory({
+      sku: form.sku,
+      product: form.product,
+      category: form.category,
+      quantity: form.quantity,
+      minimumStock: form.minimum_stock,
+      costUsd: form.cost_usd,
+      exchangeRate: form.exchange_rate,
+      salePriceMxn: form.sale_price_mxn,
+    });
+
+    if (!validation.valid) {
+      setMessage(validation.errors[0]);
       return;
     }
 
@@ -267,10 +279,28 @@ function saveCurrentCategory() {
       return;
     }
 
+    const { data: duplicateSku, error: duplicateError } = await supabase
+      .from("inventory")
+      .select("id")
+      .ilike("sku", validation.normalizedSku)
+      .limit(1);
+
+    if (duplicateError) {
+      setSaving(false);
+      setMessage("No se pudo validar el SKU: " + duplicateError.message);
+      return;
+    }
+
+    if ((duplicateSku ?? []).length > 0) {
+      setSaving(false);
+      setMessage("Ya existe un producto con ese SKU.");
+      return;
+    }
+
     const payload = {
       user_id: user.id,
 
-      sku: form.sku.trim() || null,
+      sku: validation.normalizedSku,
       product: form.product.trim(),
       brand: form.brand.trim() || null,
       category: form.category.trim() || null,
@@ -542,6 +572,7 @@ await load();
               <label>
                 SKU
                 <input
+                  required
                   value={form.sku}
                   onChange={(e) =>
                     setForm({
@@ -608,6 +639,7 @@ await load();
 >
     <input
       type="text"
+      required
       value={form.category}
       onChange={(e) =>
         setForm({

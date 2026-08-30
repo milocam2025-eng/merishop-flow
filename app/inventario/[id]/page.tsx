@@ -14,6 +14,7 @@ import {
 import AppShell from "@/components/AppShell";
 import AuthGuard from "@/components/AuthGuard";
 import CameraPicker from "@/components/CameraPicker";
+import { validateInventory } from "@/lib/inventory-validation";
 import { createClient } from "@/lib/supabase/client";
 
 
@@ -72,6 +73,16 @@ type ProductImage = {
 
   created_at: string;
 };
+
+type InventoryMovement = {
+  id: string;
+  movement_type: string;
+  reason: string;
+  previous_quantity: number;
+  new_quantity: number;
+  quantity_delta: number;
+  created_at: string;
+};
 export default function ProductoPage() {
   const params = useParams();
   const router = useRouter();
@@ -83,6 +94,8 @@ export default function ProductoPage() {
 
   const [images, setImages] =
     useState<ProductImage[]>([]);
+  const [movements, setMovements] =
+    useState<InventoryMovement[]>([]);
 
   const [message, setMessage] =
     useState("");
@@ -163,10 +176,27 @@ const [dragOverImageId, setDragOverImageId] =
   setImages((data as ProductImage[]) ?? []);
 }
 
+  async function loadMovements() {
+    const { data, error } = await createClient()
+      .from("inventory_movements")
+      .select("id,movement_type,reason,previous_quantity,new_quantity,quantity_delta,created_at")
+      .eq("inventory_id", id)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      // La pantalla sigue funcionando antes de aplicar la migración de fase 6.
+      setMovements([]);
+      return;
+    }
+    setMovements((data as InventoryMovement[]) ?? []);
+  }
+
   async function loadAll() {
     await Promise.all([
       loadProduct(),
       loadImages(),
+      loadMovements(),
     ]);
   }
 
@@ -896,19 +926,49 @@ function updateNumberField(
     event: FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
+    if (!form) {
+      setMessage("No se pudo cargar el producto.");
+      return;
+    }
+
+    const validation = validateInventory({
+      sku: form.sku,
+      product: form.product,
+      category: form.category,
+      quantity: form.quantity,
+      minimumStock: form.minimum_stock,
+      costUsd,
+      exchangeRate,
+      salePriceMxn: finalSalePriceMxn > 0
+        ? finalSalePriceMxn
+        : estimatedSalePriceMxn,
+    });
+
+    if (!validation.valid) {
+      setMessage(validation.errors[0]);
+      return;
+    }
 
     setSaving(true);
+    setMessage("Guardando cambios...");
 
-    setMessage(
-      "Guardando cambios..."
-    );
-if (!form) {
-  setMessage("No se pudo cargar el producto.");
-  return;
-}
+    const supabase = createClient();
+    const { data: duplicateSku, error: duplicateError } = await supabase
+      .from("inventory")
+      .select("id")
+      .ilike("sku", validation.normalizedSku)
+      .neq("id", id)
+      .limit(1);
+
+    if (duplicateError || (duplicateSku ?? []).length > 0) {
+      setSaving(false);
+      setMessage(duplicateError
+        ? "No se pudo validar el SKU: " + duplicateError.message
+        : "Ya existe otro producto con ese SKU.");
+      return;
+    }
     const payload = {
-      sku:
-        form.sku || null,
+      sku: validation.normalizedSku,
 
       product:
         form.product,
@@ -998,7 +1058,7 @@ total_cost_mxn:
     };
 
     const { error } =
-      await createClient()
+      await supabase
         .from("inventory")
         .update(payload)
         .eq("id", id);
@@ -1014,7 +1074,7 @@ total_cost_mxn:
       "Cambios guardados correctamente."
     );
 
-    await loadProduct();
+    await Promise.all([loadProduct(), loadMovements()]);
   }
 
   const displayImages: ProductImage[] = [...images];
@@ -1917,6 +1977,7 @@ onClick={() => uploadGalleryImage()}
               <label>
                 SKU
                 <input
+                  required
                   value={
                     form.sku || ""
                   }
@@ -1963,6 +2024,7 @@ onClick={() => uploadGalleryImage()}
               <label>
                 Categoría
                 <input
+                  required
                   value={
                     form.category ||
                     ""
@@ -2407,6 +2469,50 @@ onClick={() => uploadGalleryImage()}
                 : "Guardar cambios"}
             </button>
           </form>
+
+          <section className="inventory-history" aria-labelledby="inventory-history-title">
+            <div className="section-title">
+              <div>
+                <h2 id="inventory-history-title">Historial de existencias</h2>
+                <p>Últimos movimientos registrados automáticamente.</p>
+              </div>
+            </div>
+
+            {movements.length === 0 ? (
+              <p className="muted-text">
+                El historial aparecerá después de aplicar la migración de fase 6 y realizar un movimiento.
+              </p>
+            ) : (
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Tipo</th>
+                      <th>Motivo</th>
+                      <th>Anterior</th>
+                      <th>Cambio</th>
+                      <th>Nueva</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {movements.map((movement) => (
+                      <tr key={movement.id}>
+                        <td>{new Date(movement.created_at).toLocaleString("es-MX")}</td>
+                        <td>{movement.movement_type}</td>
+                        <td>{movement.reason}</td>
+                        <td>{movement.previous_quantity}</td>
+                        <td className={movement.quantity_delta >= 0 ? "movement-positive" : "movement-negative"}>
+                          {movement.quantity_delta > 0 ? "+" : ""}{movement.quantity_delta}
+                        </td>
+                        <td>{movement.new_quantity}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
 
           {message && (
             <p

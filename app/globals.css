@@ -523,3 +523,23 @@ table {
     overflow-wrap: anywhere;
   }
 }
+
+.inventory-history {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #dbe3ef;
+}
+
+.muted-text {
+  color: #64748b;
+}
+
+.movement-positive {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.movement-negative {
+  color: #b91c1c;
+  font-weight: 700;
+}
