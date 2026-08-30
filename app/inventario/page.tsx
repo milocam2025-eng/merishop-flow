@@ -75,6 +75,17 @@ const initialForm = {
   notes: "",
 };
 
+
+// CATEGORÍAS PREDETERMINADAS
+const defaultCategories = [
+  "Ropa",
+  "Calzado",
+  "Bolsas",
+  "Belleza",
+  "Accesorios",
+  "Hogar",
+];
+
 function numberValue(value: string) {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
@@ -101,9 +112,64 @@ const [form, setForm] = useState(initialForm);
 const [message, setMessage] = useState("");
 const [saving, setSaving] = useState(false);
 
+const [savedCategories, setSavedCategories] =
+  useState<string[]>(defaultCategories);
+
 const [selectedImages, setSelectedImages] = useState<File[]>([]);
 const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 const [primaryImageIndex, setPrimaryImageIndex] = useState(0);
+
+useEffect(() => {
+  const savedCategoriesJson =
+    localStorage.getItem(
+      "merishop_saved_categories"
+    );
+
+  if (savedCategoriesJson) {
+    try {
+      const parsedCategories =
+        JSON.parse(savedCategoriesJson);
+
+      if (Array.isArray(parsedCategories)) {
+        setSavedCategories(parsedCategories);
+      }
+    } catch {
+      setSavedCategories(defaultCategories);
+    }
+  }
+}, []);
+
+useEffect(() => {
+  localStorage.setItem(
+    "merishop_saved_categories",
+    JSON.stringify(savedCategories)
+  );
+}, [savedCategories]);
+
+function saveCurrentCategory() {
+  const newCategory =
+    form.category.trim();
+
+  if (!newCategory) {
+    return;
+  }
+
+  const alreadyExists =
+    savedCategories.some(
+      (item) =>
+        item.toLowerCase() ===
+        newCategory.toLowerCase()
+    );
+
+  if (alreadyExists) {
+    return;
+  }
+
+  setSavedCategories([
+    ...savedCategories,
+    newCategory,
+  ]);
+}
 
   async function load() {
     const supabase = createClient();
@@ -590,20 +656,103 @@ await load();
                 />
               </label>
 
-              <label>
-                Categoría
-                <input
-                  value={form.category}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      category: e.target.value,
-                    })
-                  }
-                  placeholder="Ej. Bolsas"
-                />
-              </label>
+             <div
+  style={{
+    gridColumn: "1 / -1",
+    marginBottom: 10,
+  }}
+>
+  <div
+    style={{
+      fontWeight: 700,
+      marginBottom: 8,
+    }}
+  >
+    Categoría
+  </div>
 
+  <div
+    style={{
+      display: "flex",
+      gap: 10,
+      marginBottom: 12,
+      flexWrap: "wrap",
+    }}
+  >
+    <input
+      type="text"
+      value={form.category}
+      onChange={(e) =>
+        setForm({
+          ...form,
+          category: e.target.value,
+        })
+      }
+      placeholder="Ej. Juguetes, Electrónica..."
+      style={{
+        flex: 1,
+        minWidth: 220,
+      }}
+    />
+
+    <button
+      type="button"
+      onClick={saveCurrentCategory}
+      style={{
+        padding: "10px 14px",
+        borderRadius: 10,
+        border: "none",
+        background: "#0f2742",
+        color: "#ffffff",
+        fontWeight: 700,
+        cursor: "pointer",
+      }}
+    >
+      ➕ Guardar categoría
+    </button>
+  </div>
+
+  <div
+    style={{
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 10,
+    }}
+  >
+    {savedCategories.map((item) => (
+      <button
+        key={item}
+        type="button"
+        onClick={() =>
+          setForm({
+            ...form,
+            category: item,
+          })
+        }
+        style={{
+          padding: "10px 14px",
+          borderRadius: 10,
+          border:
+            form.category === item
+              ? "2px solid #2563eb"
+              : "1px solid #cbd5e1",
+          background:
+            form.category === item
+              ? "#dbeafe"
+              : "#ffffff",
+          color: "#0f2742",
+          fontWeight: 700,
+          cursor: "pointer",
+        }}
+      >
+        {form.category === item
+          ? "✓ "
+          : ""}
+        {item}
+      </button>
+    ))}
+  </div>
+</div>
               <label>
                 Código de barras
                 <input
