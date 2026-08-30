@@ -64,9 +64,9 @@ const [cartCount, setCartCount] =
             quantity,
             status
           `)
-          .eq(
+          .in(
             "status",
-            "Disponible"
+            ["Disponible", "Stock bajo"]
           )
           .gt(
             "quantity",
