@@ -2,12 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { createBrowserClient } from "@supabase/ssr";
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { createClient } from "@/lib/supabase/client";
 
 type CartItem = {
   id: string;
@@ -19,6 +14,23 @@ type CartItem = {
   image?: string;
   stock: number;
   quantity: number;
+};
+
+type CheckoutItem = {
+  inventory_id: string;
+  product: string;
+  brand: string | null;
+  size: string | null;
+  color: string | null;
+  quantity: number;
+  price: number;
+  subtotal: number;
+};
+
+type CheckoutResult = {
+  order_number: string;
+  total_mxn: number;
+  items: CheckoutItem[];
 };
 
 export default function CartPage() {
@@ -151,46 +163,20 @@ async function sendWhatsAppOrder() {
     return;
   }
 
-  const orderNumber =
-    `MS-${Date.now()}`; 
+  const requestedItems = cart.map((item) => ({
+    inventory_id: item.id,
+    quantity: Number(item.quantity),
+  }));
 
-  const itemsForOrder = cart.map(
-    (item) => ({
-      inventory_id: item.id,
-      product: item.product,
-      brand: item.brand || null,
-      size: item.size || null,
-      color: item.color || null,
-      quantity: Number(item.quantity),
-      price: Number(item.price),
-      subtotal:
-        Number(item.price) *
-        Number(item.quantity),
-    })
+  const supabase = createClient();
+  const { data, error: orderError } = await supabase.rpc(
+    "create_store_order",
+    {
+      p_customer_name: customerName.trim(),
+      p_customer_phone: customerPhone.trim(),
+      p_items: requestedItems,
+    }
   );
-
-  const productSummary = cart
-    .map(
-      (item) =>
-        `${item.product} x${item.quantity}`
-    )
-    .join(", ");
-
-  const { error: orderError } =
-    await supabase
-      .from("orders")
-      .insert({
-        order_number: orderNumber,
-        source: "tienda",
-        customer_name: customerName.trim(),
-        customer_phone: customerPhone.trim(),
-        product: productSummary,
-        items: itemsForOrder,
-        total_mxn: total,
-        total: total,
-        paid: 0,
-        status: "Pendiente",
-      });
 
   if (orderError) {
     console.error(
@@ -205,10 +191,21 @@ async function sendWhatsAppOrder() {
     return;
   }
 
+  const checkout = data as CheckoutResult | null;
+
+  if (!checkout?.order_number || !Array.isArray(checkout.items)) {
+    alert("El pedido se registró, pero la respuesta no fue válida.");
+    return;
+  }
+
+  const orderNumber = checkout.order_number;
+  const confirmedTotal = Number(checkout.total_mxn || 0);
+  const confirmedItems = checkout.items;
+
   const whatsappNumber =
     "18402792847";
 
-  const productLines = cart.flatMap(
+  const productLines = confirmedItems.flatMap(
     (item, index) => {
       const lines = [
         `${index + 1}. ${item.product}`,
@@ -242,7 +239,7 @@ const message = [
   "Quiero realizar este pedido:",
     "",
     ...productLines,
-    `TOTAL DEL PEDIDO: ${money(total)} MXN`,
+    `TOTAL DEL PEDIDO: ${money(confirmedTotal)} MXN`,
     "",
     "¿Me pueden confirmar disponibilidad, forma de pago y entrega?",
   ].join("\n");
@@ -257,6 +254,8 @@ const message = [
     "_blank",
     "noopener,noreferrer"
   );
+
+  saveCart([]);
 }
 
   if (cart.length === 0) {
