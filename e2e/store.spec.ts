@@ -27,11 +27,11 @@ test("the public store exposes search and cart navigation", async ({ page }) => 
 });
 
 test("the cart restores products and recalculates quantities", async ({ page }) => {
-  await page.addInitScript((product) => {
+  await page.goto("/carrito");
+  await page.evaluate((product) => {
     window.localStorage.setItem("merishop_cart", JSON.stringify([product]));
   }, cartProduct);
-
-  await page.goto("/carrito");
+  await page.reload();
   await expect(page.getByRole("heading", { name: "Mi carrito" })).toBeVisible();
   await expect(page.getByText(cartProduct.product)).toBeVisible();
   await expect(page.getByText("$3,000.00").first()).toBeVisible();
