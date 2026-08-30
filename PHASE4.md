@@ -5,8 +5,7 @@ Esta fase protege los recorridos principales del cliente y el acceso administrat
 ## Cobertura
 
 - Carga de la tienda pública, buscador y navegación al carrito.
-- Restauración del carrito desde el navegador.
-- Actualización de cantidades y cálculo del total.
+- Estado vacío del carrito y regreso seguro a la tienda.
 - Disponibilidad del formulario de acceso administrativo.
 
 Las pruebas no crean pedidos, no modifican inventario y no utilizan la base de datos de producción.

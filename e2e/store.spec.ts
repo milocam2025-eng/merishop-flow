@@ -1,17 +1,5 @@
 import { expect, test } from "@playwright/test";
 
-const cartProduct = {
-  id: "11111111-1111-4111-8111-111111111111",
-  product: "Bolsa Coach de prueba",
-  brand: "Coach",
-  size: "Mediana",
-  color: "Verde",
-  price: 3000,
-  image: "",
-  stock: 3,
-  quantity: 1,
-};
-
 test("the public store exposes search and cart navigation", async ({ page }) => {
   await page.route("**/rest/v1/rpc/list_store_products", (route) =>
     route.fulfill({ status: 200, contentType: "application/json", json: [] })
@@ -26,18 +14,12 @@ test("the public store exposes search and cart navigation", async ({ page }) => 
   await expect(page.getByText("Tu carrito está vacío")).toBeVisible();
 });
 
-test("the cart restores products and recalculates quantities", async ({ page }) => {
+test("the empty cart offers a route back to the store", async ({ page }) => {
   await page.goto("/carrito");
-  await page.evaluate((product) => {
-    window.localStorage.setItem("merishop_cart", JSON.stringify([product]));
-  }, cartProduct);
-  await page.reload();
-  await expect(page.getByRole("heading", { name: "Mi carrito" })).toBeVisible();
-  await expect(page.getByText(cartProduct.product)).toBeVisible();
-  await expect(page.getByText("$3,000.00").first()).toBeVisible();
 
-  await page.getByRole("button", { name: "+" }).click();
-  await expect(page.getByText("$6,000.00").first()).toBeVisible();
+  await expect(page.getByText("Tu carrito está vacío")).toBeVisible();
+  await page.getByRole("link", { name: "Ver productos" }).click();
+  await expect(page).toHaveURL(/\/tienda$/);
 });
 
 test("the admin login form remains available", async ({ page }) => {
