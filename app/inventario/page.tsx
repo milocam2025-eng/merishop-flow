@@ -744,6 +744,7 @@ style={{
           color: "#0f2742",
           fontWeight: 700,
           cursor: "pointer",
+          whiteSpace: "nowrap",
         }}
       >
         {form.category === item
