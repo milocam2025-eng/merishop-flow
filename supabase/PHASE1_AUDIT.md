@@ -41,3 +41,13 @@ La migración todavía no se ha ejecutado. Antes de aplicarla se debe confirmar:
 2. Que `inventory.id` y `orders.id` usan UUID.
 3. Que el rol anónimo no conserva otra vía de inserción directa en `orders`.
 4. Que el bucket de imágenes permite lectura pública pero restringe escritura y eliminación al propietario autenticado.
+
+## Compatibilidad confirmada
+
+- `inventory.id`: UUID.
+- `inventory_images.inventory_id`: UUID.
+- `orders.id`: UUID.
+- Bucket `product-images`: público.
+- Las políticas de Storage restringen carga, actualización y eliminación al rol autenticado.
+
+La activación se dividió en preparación y cierre definitivo para evitar interrupciones entre la migración de Supabase y el despliegue de Vercel.
