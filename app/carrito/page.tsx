@@ -3,18 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import {
+  CART_STORAGE_KEY,
+  CART_UPDATED_EVENT,
+  parseStoredCart,
+  type StoreCartItem,
+} from "@/lib/store-cart";
 
-type CartItem = {
-  id: string;
-  product: string;
-  brand?: string | null;
-  size?: string | null;
-  color?: string | null;
-  price: number;
-  image?: string;
-  stock: number;
-  quantity: number;
-};
+type CartItem = StoreCartItem;
 
 type CheckoutItem = {
   inventory_id: string;
@@ -37,36 +33,21 @@ export default function CartPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [checkoutMessage, setCheckoutMessage] = useState("");
 
   useEffect(() => {
-    const savedCart =
-      localStorage.getItem("merishop_cart");
-
-    if (!savedCart) {
-      setCart([]);
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(savedCart);
-
-      if (Array.isArray(parsed)) {
-        setCart(parsed);
-      } else {
-        setCart([]);
-      }
-    } catch {
-      setCart([]);
-    }
+    setCart(parseStoredCart(localStorage.getItem(CART_STORAGE_KEY)));
   }, []);
 
   function saveCart(items: CartItem[]) {
     setCart(items);
 
     localStorage.setItem(
-      "merishop_cart",
+      CART_STORAGE_KEY,
       JSON.stringify(items)
     );
+    window.dispatchEvent(new Event(CART_UPDATED_EVENT));
   }
 
   function increaseQuantity(id: string) {
@@ -151,17 +132,23 @@ export default function CartPage() {
   }
 
 async function sendWhatsAppOrder() {
-  if (cart.length === 0) return;
+  if (cart.length === 0 || submitting) return;
+
+  setCheckoutMessage("");
 
   if (!customerName.trim()) {
-    alert("Escribe tu nombre antes de enviar el pedido.");
+    setCheckoutMessage("Escribe tu nombre antes de enviar el pedido.");
     return;
   }
 
-  if (!customerPhone.trim()) {
-    alert("Escribe tu número de WhatsApp antes de enviar el pedido.");
+  const normalizedPhone = customerPhone.replace(/\D/g, "");
+  if (normalizedPhone.length < 10 || normalizedPhone.length > 15) {
+    setCheckoutMessage("Escribe un número de WhatsApp válido de 10 a 15 dígitos.");
     return;
   }
+
+  setSubmitting(true);
+  setCheckoutMessage("Registrando tu pedido...");
 
   const requestedItems = cart.map((item) => ({
     inventory_id: item.id,
@@ -173,7 +160,7 @@ async function sendWhatsAppOrder() {
     "create_store_order",
     {
       p_customer_name: customerName.trim(),
-      p_customer_phone: customerPhone.trim(),
+      p_customer_phone: normalizedPhone,
       p_items: requestedItems,
     }
   );
@@ -184,9 +171,8 @@ async function sendWhatsAppOrder() {
       orderError
     );
 
-    alert(
-      "No se pudo registrar el pedido. Intenta nuevamente."
-    );
+    setSubmitting(false);
+    setCheckoutMessage("No se pudo registrar el pedido. Revisa las existencias e intenta nuevamente.");
 
     return;
   }
@@ -194,7 +180,8 @@ async function sendWhatsAppOrder() {
   const checkout = data as CheckoutResult | null;
 
   if (!checkout?.order_number || !Array.isArray(checkout.items)) {
-    alert("El pedido se registró, pero la respuesta no fue válida.");
+    setSubmitting(false);
+    setCheckoutMessage("El pedido se registró, pero la respuesta no fue válida. Contacta a MeriShop.");
     return;
   }
 
@@ -234,7 +221,7 @@ const message = [
   "",
   `Pedido: ${orderNumber}`,
   `Cliente: ${customerName}`,
-  `WhatsApp: ${customerPhone}`,
+  `WhatsApp: ${normalizedPhone}`,
   "",
   "Quiero realizar este pedido:",
     "",
@@ -256,6 +243,7 @@ const message = [
   );
 
   saveCart([]);
+  setSubmitting(false);
 }
 
   if (cart.length === 0) {
@@ -414,6 +402,7 @@ const message = [
       Nombre
       <input
         type="text"
+        autoComplete="name"
         value={customerName}
         onChange={(e) =>
           setCustomerName(e.target.value)
@@ -427,6 +416,8 @@ const message = [
       WhatsApp
       <input
         type="tel"
+        inputMode="tel"
+        autoComplete="tel"
         value={customerPhone}
         onChange={(e) =>
           setCustomerPhone(e.target.value)
@@ -467,10 +458,15 @@ const message = [
             <button
               type="button"
               onClick={sendWhatsAppOrder}
+              disabled={submitting}
               style={styles.whatsappButton}
             >
-              Enviar pedido por WhatsApp
+              {submitting ? "Registrando pedido..." : "Enviar pedido por WhatsApp"}
             </button>
+
+            {checkoutMessage && (
+              <p role="status" style={styles.checkoutMessage}>{checkoutMessage}</p>
+            )}
 
             <div style={styles.note}>
               Tu pedido se enviará a MeriShop
@@ -701,6 +697,14 @@ summary: {
     fontSize: 17,
     fontWeight: 800,
     cursor: "pointer",
+  },
+
+  checkoutMessage: {
+    margin: "14px 0 0",
+    color: "#334155",
+    fontSize: 14,
+    fontWeight: 700,
+    lineHeight: 1.5,
   },
 
   note: {
