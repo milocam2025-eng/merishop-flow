@@ -54,23 +54,11 @@ const [selectedImage, setSelectedImage] =
     const supabase = createClient();
 
     const { data, error } = await supabase
-      .from("inventory")
-      .select(`
-        id,
-        product,
-        brand,
-        category,
-        size,
-        color,  
-        image_url,
-        sale_price_mxn,
-        quantity,
-        status
-      `)
-      .eq("id", id)
-      .single();
+      .rpc("get_store_product", {
+        p_inventory_id: id,
+      });
 
-    if (error) {
+    if (error || !data) {
       console.error(error);
 
       setError(
@@ -81,27 +69,20 @@ const [selectedImage, setSelectedImage] =
       return;
     }
 
-    setProduct(data as Product);
+    const storeProduct = data as Product;
+    setProduct(storeProduct);
 
     // ========================================
     // CARGAR GALERÍA DE FOTOS
     // ========================================
 
-    const {
-      data: imageData,
-      error: imageError,
-    } = await supabase
-      .from("inventory_images")
-      .select(`
-        id,
-        image_url,
-        sort_order,
-        is_primary
-      `)
-      .eq("inventory_id", id)
-      .order("sort_order", {
-        ascending: true,
-      });
+    const { data: imageData, error: imageError } =
+      await supabase.rpc(
+        "list_store_product_images",
+        {
+          p_inventory_id: id,
+        }
+      );
 
     if (imageError) {
       console.error(
@@ -109,9 +90,9 @@ const [selectedImage, setSelectedImage] =
         imageError
       );
 
-      if (data.image_url) {
+      if (storeProduct.image_url) {
         setSelectedImage(
-          data.image_url
+          storeProduct.image_url
         );
       }
     } else {
@@ -130,9 +111,9 @@ const [selectedImage, setSelectedImage] =
         setSelectedImage(
           primary.image_url
         );
-      } else if (data.image_url) {
+      } else if (storeProduct.image_url) {
         setSelectedImage(
-          data.image_url
+          storeProduct.image_url
         );
       }
     }

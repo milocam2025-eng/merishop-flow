@@ -201,7 +201,7 @@ async function cancelOrder(order: Order) {
 
   const confirmMessage =
     isStoreOrder
-      ? "¿Cancelar este pedido de la tienda online?"
+      ? "¿Cancelar este pedido y devolver sus productos al inventario?"
       : "¿Cancelar este pedido y devolver 1 unidad al inventario?";
 
   if (!confirm(confirmMessage)) {
@@ -210,99 +210,20 @@ async function cancelOrder(order: Order) {
 
   const supabase = createClient();
 
-  const { error: orderError } =
-    await supabase
-      .from("orders")
-      .update({
-        status: "Cancelado",
-      })
-      .eq("id", order.id);
+  const { error: orderError } = await supabase.rpc(
+    "cancel_order_and_restore_inventory",
+    { p_order_id: order.id }
+  );
 
   if (orderError) {
     setMessage(orderError.message);
     return;
   }
 
-  if (isStoreOrder) {
-    setMessage(
-      "Pedido de tienda online cancelado correctamente."
-    );
-
-    load();
-    return;
-  }
-
-  if (order.inventory_id) {
-    const {
-      data: item,
-      error: inventoryReadError,
-    } = await supabase
-      .from("inventory")
-      .select(
-        "quantity,minimum_stock"
-      )
-      .eq(
-        "id",
-        order.inventory_id
-      )
-      .single();
-
-    if (inventoryReadError) {
-      setMessage(
-        "El pedido se canceló, pero no se pudo leer el inventario: " +
-          inventoryReadError.message
-      );
-      return;
-    }
-
-    const restoredQuantity =
-      Number(item.quantity || 0) + 1;
-
-    const minimumStock =
-      Number(
-        item.minimum_stock || 1
-      );
-
-    let restoredStatus =
-      "Disponible";
-
-    if (restoredQuantity <= 0) {
-      restoredStatus =
-        "Agotado";
-    } else if (
-      restoredQuantity <=
-      minimumStock
-    ) {
-      restoredStatus =
-        "Stock bajo";
-    }
-
-    const {
-      error: inventoryUpdateError,
-    } = await supabase
-      .from("inventory")
-      .update({
-        quantity:
-          restoredQuantity,
-        status:
-          restoredStatus,
-      })
-      .eq(
-        "id",
-        order.inventory_id
-      );
-
-    if (inventoryUpdateError) {
-      setMessage(
-        "El pedido se canceló, pero no se pudo restaurar el inventario: " +
-          inventoryUpdateError.message
-      );
-      return;
-    }
-  }
-
   setMessage(
-    "Pedido cancelado y unidad devuelta al inventario."
+    isStoreOrder
+      ? "Pedido cancelado y productos devueltos al inventario."
+      : "Pedido cancelado y unidad devuelta al inventario."
   );
 
   load();
