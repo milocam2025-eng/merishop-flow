@@ -25,6 +25,14 @@ La prueba no encontró exposición anónima observable de clientes, pedidos, pag
 
 El resultado `0 filas visibles` no demuestra por sí solo que una política RLS sea correcta: también puede significar que la tabla está vacía. La revisión definitiva de políticas, permisos, tipos de identificadores y buckets requiere ejecutar `audit_phase1_readonly.sql` dentro de Supabase SQL Editor.
 
+## Políticas confirmadas en Supabase
+
+- Las siete tablas públicas tienen RLS activado: `clients`, `inventory`, `inventory_images`, `orders`, `payments`, `product_images` y `shipments`.
+- Las tablas administrativas utilizan condiciones basadas en `auth.uid() = user_id`.
+- `orders` contiene `orders_public_insert`, una política `INSERT` para `public` con `with_check = true`. Esta política permite inserciones anónimas directas y debe eliminarse al aplicar la migración.
+- `orders_admin_read_store` y `orders_admin_update_store` permiten al usuario autenticado administrar pedidos originados en la tienda.
+- No existe una política anónima segura para listar productos. En lugar de abrir lectura completa de `inventory`, la migración expondrá funciones de catálogo con una lista limitada de columnas públicas.
+
 ## Estado de la migración
 
 La migración todavía no se ha ejecutado. Antes de aplicarla se debe confirmar:
