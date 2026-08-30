@@ -5,6 +5,8 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import AuthGuard from "@/components/AuthGuard";
 import StatusBadge from "@/components/StatusBadge";
+import HeaderMetrics from "@/components/HeaderMetrics";
+import { formatMXN, formatUSD, numberValue } from "@/lib/formatters";
 import { createClient } from "@/lib/supabase/client";
 
 type InventoryRow = {
@@ -86,24 +88,8 @@ const defaultCategories = [
   "Hogar",
 ];
 
-function numberValue(value: string) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
-}
-
-function money(value?: number | null) {
-  return Number(value || 0).toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-  });
-}
-
-function moneyUSD(value?: number | null) {
-  return Number(value || 0).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
-}
+const money = formatMXN;
+const moneyUSD = formatUSD;
 
 export default function InventarioPage() {
 const [rows, setRows] = useState<InventoryRow[]>([]);
@@ -520,82 +506,22 @@ await load();
   title="Inventario"
   subtitle="Control de productos, existencias, costos y rentabilidad."
   headerExtra={
-    <div
-      style={{
-        display: "flex",
-        gap: 12,
-        flexWrap: "wrap",
-        justifyContent: "flex-end",
-      }}
-    >
-      <div
-        style={{
-          padding: "10px 14px",
-          borderRadius: 12,
-          background: "#ffffff",
-          border: "1px solid #dbe4ef",
-          minWidth: 110,
-        }}
-      >
-        <div style={{ fontSize: 12, opacity: 0.65 }}>
-          Artículos
-        </div>
-        <strong style={{ fontSize: 18 }}>
-          {filtered.length}
-        </strong>
-      </div>
-
-      <div
-        style={{
-          padding: "10px 14px",
-          borderRadius: 12,
-          background: "#ffffff",
-          border: "1px solid #dbe4ef",
-          minWidth: 110,
-        }}
-      >
-        <div style={{ fontSize: 12, opacity: 0.65 }}>
-          Unidades
-        </div>
-        <strong style={{ fontSize: 18 }}>
-          {units}
-        </strong>
-      </div>
-
-      <div
-        style={{
-          padding: "10px 14px",
-          borderRadius: 12,
-          background: "#ffffff",
-          border: "1px solid #dbe4ef",
+    <HeaderMetrics
+      metrics={[
+        { label: "Artículos", value: filtered.length },
+        { label: "Unidades", value: units },
+        {
+          label: "Valor inventario",
+          value: money(inventoryValue),
           minWidth: 145,
-        }}
-      >
-        <div style={{ fontSize: 12, opacity: 0.65 }}>
-          Valor inventario
-        </div>
-        <strong style={{ fontSize: 18 }}>
-          {money(inventoryValue)}
-        </strong>
-      </div>
-
-      <div
-        style={{
-          padding: "10px 14px",
-          borderRadius: 12,
-          background: "#ffffff",
-          border: "1px solid #dbe4ef",
+        },
+        {
+          label: "Ganancia potencial",
+          value: money(potentialProfit),
           minWidth: 145,
-        }}
-      >
-        <div style={{ fontSize: 12, opacity: 0.65 }}>
-          Ganancia potencial
-        </div>
-        <strong style={{ fontSize: 18 }}>
-          {money(potentialProfit)}
-        </strong>
-      </div>
-    </div>
+        },
+      ]}
+    />
   }
 >
         <section className="panel">
@@ -1466,4 +1392,4 @@ return (
 </AppShell>
 </AuthGuard>
 );
-}            
+}
