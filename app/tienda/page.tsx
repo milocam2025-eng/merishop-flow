@@ -51,33 +51,9 @@ const [cartCount, setCartCount] =
         createClient();
 
       const { data, error } =
-        await supabase
-          .from("inventory")
-          .select(`
-            id,
-            product,
-            brand,
-            category,
-            size,
-            image_url,
-            sale_price_mxn,
-            quantity,
-            status
-          `)
-          .in(
-            "status",
-            ["Disponible", "Stock bajo"]
-          )
-          .gt(
-            "quantity",
-            0
-          )
-          .order(
-            "created_at",
-            {
-              ascending: false,
-            }
-          );
+        await supabase.rpc(
+          "list_store_products"
+        );
 
       if (error) {
         console.error(
