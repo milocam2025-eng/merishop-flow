@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("the public store exposes search and cart navigation", async ({ page }) => {
-  await page.route("**/rest/v1/rpc/list_store_products", (route) =>
+  await page.route("**/rpc/list_store_products*", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -15,6 +15,7 @@ test("the public store exposes search and cart navigation", async ({ page }) => 
   await page.goto("/tienda");
   await expect(page.getByRole("heading", { name: "MeriShop" })).toBeVisible();
   await expect(page.getByPlaceholder("🔎 Buscar productos...")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bolsa Coach" })).toBeVisible();
   await expect(page.getByText("2 productos")).toBeVisible();
 
   await page.getByPlaceholder("🔎 Buscar productos...").fill("Coach");
