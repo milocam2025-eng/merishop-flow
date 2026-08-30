@@ -6,29 +6,12 @@ import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import AuthGuard from "@/components/AuthGuard";
 import CameraPicker from "@/components/CameraPicker";
+import type { PublishableInventoryProduct } from "@/lib/domain";
+import { formatMXN, formatUSD, numberValue } from "@/lib/formatters";
 import { createClient } from "@/lib/supabase/client";
 
-function numberValue(value: string) {
-  const number = Number(value);
-
-  return Number.isFinite(number)
-    ? number
-    : 0;
-}
-
-function moneyMXN(value: number) {
-  return value.toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-  });
-}
-
-function moneyUSD(value: number) {
-  return value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
-}
+const moneyMXN = formatMXN;
+const moneyUSD = formatUSD;
 
 
 const defaultStores = [
@@ -96,25 +79,8 @@ const [category, setCategory] =
   useState("");
 const [savedCategories, setSavedCategories] =
   useState<string[]>(defaultCategories);
-type InventoryProduct = {
-  id: string;
-  product: string;
-  brand?: string | null;
-  category?: string | null;
-  size?: string | null;
-  image_url?: string | null;
-  store?: string | null;
-
-  cost_usd?: number | null;
-  tax_rate?: number | null;
-  shipping_usd?: number | null;
-  commission_percent?: number | null;
-  exchange_rate?: number | null;
-  sale_price_mxn?: number | null;
-};
-
 const [inventoryProducts, setInventoryProducts] =
-  useState<InventoryProduct[]>([]);
+  useState<PublishableInventoryProduct[]>([]);
 
 const [selectedInventoryId, setSelectedInventoryId] =
   useState("");
@@ -226,7 +192,7 @@ useEffect(() => {
     }
 
     setInventoryProducts(
-      (data as InventoryProduct[]) ?? []
+      (data as PublishableInventoryProduct[]) ?? []
     );
   }
 

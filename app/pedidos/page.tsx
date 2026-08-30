@@ -4,60 +4,15 @@ import { FormEvent, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import AuthGuard from "@/components/AuthGuard";
 import StatusBadge from "@/components/StatusBadge";
+import HeaderMetrics from "@/components/HeaderMetrics";
+import type { Client, InventorySummary, Order, Payment } from "@/lib/domain";
+import { formatMXN } from "@/lib/formatters";
 import { createClient } from "@/lib/supabase/client";
 
-type Client = { id: string; name: string };
-type Inventory = {
-  id: string;
-  product: string;
-  quantity: number;
-  minimum_stock: number | null;
-  cost_usd: number | null;
-  tax_usd: number | null;
-  shipping_usd: number | null;
-};
-type Order = {
-  id: string;
-  product: string;
-  cost: number;
-  tax: number;
-  commission_percent: number;
-  shipping: number;
-  total: number;
-  paid: number;
-  status: string;
-  client_id: string | null;
-  inventory_id: string | null;
-
-  order_number?: string | null;
-  source?: string | null;
-  customer_name?: string | null;
-  customer_phone?: string | null;
-  total_mxn?: number | null;
-  created_at?: string | null;
-
-  items?: {
-    inventory_id?: string;
-    product: string;
-    brand?: string | null;
-    size?: string | null;
-    color?: string | null;
-    quantity: number;
-    price: number;
-    subtotal: number;
-  }[] | null;
-};
-type Payment = {
-  id: string;
-  order_id: string;
-  amount: number;
-  method: string;
-  created_at: string;
-};
 export default function PedidosPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [rows, setRows] = useState<Order[]>([]);
-  const [inventory, setInventory] = useState<Inventory[]>([]);
+  const [inventory, setInventory] = useState<InventorySummary[]>([]);
   const [message, setMessage] = useState("");
   const [selectedOrder, setSelectedOrder] =
     useState<Order | null>(null);
@@ -96,7 +51,7 @@ supabase
     .order("product"),
       supabase.from("orders").select("*").order("created_at", { ascending: false })
     ]);
-setInventory((inventoryResult.data as Inventory[]) ?? []);
+setInventory((inventoryResult.data as InventorySummary[]) ?? []);
     setClients((clientResult.data as Client[]) ?? []);
     setRows((orderResult.data as Order[]) ?? []);
     if (orderResult.error) setMessage(orderResult.error.message);
@@ -526,11 +481,7 @@ const pendingBalance = rows.reduce(
   0
 );
 
-const money = (value: number) =>
-  value.toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-  });
+const money = formatMXN;
 
 return (
     <AuthGuard>
@@ -538,106 +489,18 @@ return (
   title="Pedidos"
   subtitle="Controla pedidos, pagos y saldos desde un solo lugar."
   headerExtra={
-    <div
-      style={{
-        display: "flex",
-        gap: 12,
-        flexWrap: "wrap",
-        justifyContent: "flex-end",
-      }}
-    >
-      <div
-        style={{
-          padding: "10px 14px",
-          borderRadius: 12,
-          background: "#ffffff",
-          border: "1px solid #dbe4ef",
-          minWidth: 105,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 12,
-            opacity: 0.65,
-          }}
-        >
-          Pedidos
-        </div>
-
-        <strong style={{ fontSize: 18 }}>
-          {totalOrders}
-        </strong>
-      </div>
-
-      <div
-        style={{
-          padding: "10px 14px",
-          borderRadius: 12,
-          background: "#ffffff",
-          border: "1px solid #dbe4ef",
-          minWidth: 105,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 12,
-            opacity: 0.65,
-          }}
-        >
-          Activos
-        </div>
-
-        <strong style={{ fontSize: 18 }}>
-          {activeOrders}
-        </strong>
-      </div>
-
-      <div
-        style={{
-          padding: "10px 14px",
-          borderRadius: 12,
-          background: "#ffffff",
-          border: "1px solid #dbe4ef",
-          minWidth: 105,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 12,
-            opacity: 0.65,
-          }}
-        >
-          Pagados
-        </div>
-
-        <strong style={{ fontSize: 18 }}>
-          {paidOrders}
-        </strong>
-      </div>
-
-      <div
-        style={{
-          padding: "10px 14px",
-          borderRadius: 12,
-          background: "#ffffff",
-          border: "1px solid #dbe4ef",
+    <HeaderMetrics
+      metrics={[
+        { label: "Pedidos", value: totalOrders, minWidth: 105 },
+        { label: "Activos", value: activeOrders, minWidth: 105 },
+        { label: "Pagados", value: paidOrders, minWidth: 105 },
+        {
+          label: "Saldo pendiente",
+          value: money(pendingBalance),
           minWidth: 155,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 12,
-            opacity: 0.65,
-          }}
-        >
-          Saldo pendiente
-        </div>
-
-        <strong style={{ fontSize: 18 }}>
-          {money(pendingBalance)}
-        </strong>
-      </div>
-    </div>
+        },
+      ]}
+    />
   }
 >    
         <section className="panel">
