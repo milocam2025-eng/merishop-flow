@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import AuthGuard from "@/components/AuthGuard";
+import { orderTotalMXN, summarizeOrders } from "@/lib/reporting";
 import { createClient } from "@/lib/supabase/client";
 
-type Order = { total: number; paid: number; status: string; created_at: string };
+type Order = { total: number; total_mxn?: number | null; paid: number; status: string; source?: string | null; created_at: string };
 type Inventory = { quantity: number; status: string };
 type Payment = { amount: number; created_at: string };
 
@@ -29,7 +30,7 @@ export default function DashboardPage() {
       const s = createClient();
       const [clients, orders, inventory, shipments, payments] = await Promise.all([
         s.from("clients").select("id", { count: "exact", head: true }),
-        s.from("orders").select("total,paid,status,created_at").order("created_at", { ascending: false }),
+        s.from("orders").select("total,total_mxn,paid,status,source,created_at").order("created_at", { ascending: false }),
         s.from("inventory").select("quantity,status"),
         s.from("shipments").select("id", { count: "exact", head: true }),
         s.from("payments").select("amount,created_at")
@@ -42,13 +43,15 @@ export default function DashboardPage() {
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      const sales = orderRows.reduce((sum, r) => sum + Number(r.total ?? 0), 0);
-      const paid = orderRows.reduce((sum, r) => sum + Number(r.paid ?? 0), 0);
+      const activeOrders = orderRows.filter((order) => order.status !== "Cancelado");
+      const summary = summarizeOrders(activeOrders);
+      const sales = summary.sales;
+      const paid = summary.paid;
       const inventoryTotal = inventoryRows.reduce((sum, r) => sum + Number(r.quantity ?? 0), 0);
 
-      const monthSales = orderRows
+      const monthSales = activeOrders
         .filter(r => new Date(r.created_at) >= monthStart)
-        .reduce((sum, r) => sum + Number(r.total ?? 0), 0);
+        .reduce((sum, r) => sum + orderTotalMXN(r), 0);
 
       const monthPayments = paymentRows
         .filter(r => new Date(r.created_at) >= monthStart)
@@ -56,7 +59,7 @@ export default function DashboardPage() {
 
       setStats({
         clients: clients.count ?? 0,
-        orders: orderRows.length,
+        orders: activeOrders.length,
         sales,
         paid,
         pending: Math.max(0, sales - paid),
@@ -66,7 +69,7 @@ export default function DashboardPage() {
         monthPayments
       });
 
-      setRecent(orderRows.slice(0, 5));
+      setRecent(activeOrders.slice(0, 5));
     }
 
     load();
@@ -111,9 +114,9 @@ export default function DashboardPage() {
                 ) : recent.map((r, i) => (
                   <tr key={i}>
                     <td>{new Date(r.created_at).toLocaleDateString("es-MX")}</td>
-                    <td>${Number(r.total).toFixed(2)}</td>
+                    <td>${orderTotalMXN(r).toFixed(2)}</td>
                     <td>${Number(r.paid).toFixed(2)}</td>
-                    <td>${Math.max(0, Number(r.total)-Number(r.paid)).toFixed(2)}</td>
+                    <td>${Math.max(0, orderTotalMXN(r)-Number(r.paid)).toFixed(2)}</td>
                     <td><span className="badge">{r.status || "Nuevo"}</span></td>
                   </tr>
                 ))}

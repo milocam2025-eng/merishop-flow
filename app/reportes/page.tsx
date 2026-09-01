@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import AuthGuard from "@/components/AuthGuard";
+import { inDateRange, orderTotalMXN, summarizeOrders } from "@/lib/reporting";
 import { createClient } from "@/lib/supabase/client";
 
 type Order = {
   id: string;
   product: string;
   total: number;
+  total_mxn?: number | null;
   paid: number;
   status: string;
+  source?: string | null;
   client_id: string | null;
   created_at: string;
 };
@@ -59,6 +62,8 @@ export default function ReportesPage() {
 const [clients, setClients] = useState<Client[]>([]);
 const [inventory, setInventory] = useState<Inventory[]>([]);
 const [shipments, setShipments] = useState<Shipment[]>([]);
+const [startDate, setStartDate] = useState("");
+const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
   async function load() {
@@ -72,7 +77,7 @@ const [shipments, setShipments] = useState<Shipment[]>([]);
       shipmentsResult,
     ] = await Promise.all([
       s.from("orders")
-        .select("id,product,total,paid,status,client_id,created_at")
+        .select("id,product,total,total_mxn,paid,status,source,client_id,created_at")
         .order("created_at", { ascending: false }),
 
       s.from("payments")
@@ -104,37 +109,31 @@ const [shipments, setShipments] = useState<Shipment[]>([]);
   load();
 }, []);
 
-const activeOrders = orders.filter(
+const periodOrders = useMemo(
+  () => orders.filter((order) => inDateRange(order.created_at, startDate, endDate)),
+  [orders, startDate, endDate]
+);
+
+const periodPayments = useMemo(
+  () => payments.filter((payment) => inDateRange(payment.created_at, startDate, endDate)),
+  [payments, startDate, endDate]
+);
+
+const activeOrders = periodOrders.filter(
   (order) => order.status !== "Cancelado"
-);  
-const activeSales = activeOrders.reduce(
-  (sum, order) => sum + Number(order.total || 0),
-  0
 );
-
-const activePaid = activeOrders.reduce(
-  (sum, order) => sum + Number(order.paid || 0),
-  0
-);
-
-const pendingBalance = activeOrders.reduce(
-  (sum, order) =>
-    sum +
-    Math.max(
-      0,
-      Number(order.total || 0) -
-        Number(order.paid || 0)
-    ),
-  0
-);
+const orderSummary = summarizeOrders(activeOrders);
+const activeSales = orderSummary.sales;
+const activePaid = orderSummary.paid;
+const pendingBalance = orderSummary.balance;
 
 const pendingOrders = activeOrders.filter(
   (order) =>
-    Number(order.total || 0) >
+    orderTotalMXN(order) >
     Number(order.paid || 0)
 ).length;
 
-const paidOrders = orders.filter(
+const paidOrders = periodOrders.filter(
   (order) => order.status === "Pagado"
 ).length;
 
@@ -183,7 +182,7 @@ const lowStock = inventory
   })
   .slice(0, 5);
 
-const recentPayments = payments.slice(0, 5);
+const recentPayments = periodPayments.slice(0, 5);
 
 const recentShipments = shipments.slice(0, 5);
 const today = new Date();
@@ -206,7 +205,7 @@ const last30Days = Array.from({ length: 30 }, (_, index) => {
       return created >= date && created < nextDate;
     })
     .reduce(
-      (sum, order) => sum + Number(order.total || 0),
+      (sum, order) => sum + orderTotalMXN(order),
       0
     );
 
@@ -235,7 +234,7 @@ const salesLast30Days = last30Days.reduce(
 );
 
 const previous30DaysSales = previous30Days.reduce(
-  (sum, order) => sum + Number(order.total || 0),
+  (sum, order) => sum + orderTotalMXN(order),
   0
 );
 const salesTrend =
@@ -274,7 +273,7 @@ const productRanking = Object.values(
       }
 
       acc[key].orders += 1;
-      acc[key].sales += Number(order.total || 0);
+      acc[key].sales += orderTotalMXN(order);
 
       return acc;
     },
@@ -313,7 +312,7 @@ activeOrders.forEach((order) => {
   const clientId = order.client_id;
   const name = clientName(clientId);
 
-  const total = Number(order.total || 0);
+  const total = orderTotalMXN(order);
   const paidAmount = Number(order.paid || 0);
 
   const current = clientRankingMap.get(clientId) || {
@@ -344,7 +343,7 @@ const maxClientSales = Math.max(
   1
 );
 const paymentMethods = Object.values(
-  payments.reduce(
+  periodPayments.reduce(
     (acc, payment) => {
       const method = payment.method || "Sin método";
       const amount = Number(payment.amount || 0);
@@ -380,12 +379,12 @@ const totalPaymentsAmount = paymentMethods.reduce(
   function exportOrders() {
     downloadCsv("merishop-pedidos.csv", [
       ["Fecha","Producto","Total","Pagado","Saldo","Estado"],
-      ...orders.map(r => [
+      ...periodOrders.map(r => [
         new Date(r.created_at).toLocaleDateString("es-MX"),
         r.product,
-        Number(r.total).toFixed(2),
+        orderTotalMXN(r).toFixed(2),
         Number(r.paid).toFixed(2),
-        Math.max(0, Number(r.total)-Number(r.paid)).toFixed(2),
+        Math.max(0, orderTotalMXN(r)-Number(r.paid)).toFixed(2),
         r.status
       ])
     ]);
@@ -394,7 +393,7 @@ const totalPaymentsAmount = paymentMethods.reduce(
   function exportPayments() {
     downloadCsv("merishop-pagos.csv", [
       ["Fecha","Monto","Método"],
-      ...payments.map(r => [
+      ...periodPayments.map(r => [
         new Date(r.created_at).toLocaleDateString("es-MX"),
         Number(r.amount).toFixed(2),
         r.method || ""
@@ -405,6 +404,55 @@ const totalPaymentsAmount = paymentMethods.reduce(
   return (
     <AuthGuard>
       <AppShell title="Reportes">
+<section className="panel" style={{ marginBottom: 20 }}>
+  <div className="section-title">
+    <div>
+      <h2>Periodo del reporte</h2>
+      <p>Filtra ventas, cobros, rankings y archivos CSV.</p>
+    </div>
+  </div>
+  <div
+    style={{
+      display: "flex",
+      gap: 14,
+      flexWrap: "wrap",
+      alignItems: "end",
+    }}
+  >
+    <label>
+      Desde
+      <input
+        type="date"
+        value={startDate}
+        max={endDate || undefined}
+        onChange={(event) => setStartDate(event.target.value)}
+      />
+    </label>
+    <label>
+      Hasta
+      <input
+        type="date"
+        value={endDate}
+        min={startDate || undefined}
+        onChange={(event) => setEndDate(event.target.value)}
+      />
+    </label>
+    <button
+      type="button"
+      className="secondary-action"
+      onClick={() => {
+        setStartDate("");
+        setEndDate("");
+      }}
+      disabled={!startDate && !endDate}
+    >
+      Mostrar todo
+    </button>
+    <strong style={{ marginLeft: "auto" }}>
+      {activeOrders.length} pedidos activos
+    </strong>
+  </div>
+</section>
 <section
   className="panel"
   style={{
@@ -978,10 +1026,6 @@ const totalPaymentsAmount = paymentMethods.reduce(
   </div>
 </section>
 
-  {/* Clientes VIP */}
-<section className="panel" style={{ marginTop: 20 }}>
-</section>
-
 {/* CENTRO DE OPERACIONES PREMIUM */}
 <section
   style={{
@@ -1017,7 +1061,7 @@ const totalPaymentsAmount = paymentMethods.reduce(
               <tr key={order.id}>
                 <td>{clientName(order.client_id)}</td>
                 <td>{order.product}</td>
-                <td>${Number(order.total || 0).toFixed(2)}</td>
+                <td>${orderTotalMXN(order).toFixed(2)}</td>
                 <td>{order.status}</td>
               </tr>
             ))
