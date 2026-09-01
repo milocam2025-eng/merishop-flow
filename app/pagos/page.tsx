@@ -3,14 +3,17 @@
 import { FormEvent, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import AuthGuard from "@/components/AuthGuard";
+import { orderTotalMXN } from "@/lib/reporting";
 import { createClient } from "@/lib/supabase/client";
 
 type Order = {
   id: string;
   product: string;
   total: number;
+  total_mxn?: number | null;
   paid: number;
   status: string;
+  source?: string | null;
   order_number?: string | null;
   customer_name?: string | null;
 };
@@ -27,7 +30,7 @@ export default function PagosPage() {
     const s = createClient();
     const [ordersResult, paymentResult] = await Promise.all([
     s.from("orders")
-  .select("id,product,total,paid,status,order_number,customer_name")
+  .select("id,product,total,total_mxn,paid,status,source,order_number,customer_name")
   .order("created_at", { ascending: false }),
       s.from("payments").select("*").order("created_at", { ascending: false })
     ]);
@@ -77,9 +80,7 @@ if (!order) {
   return;
 }
 
-const balance =
-  Number(order.total || 0) -
-  Number(order.paid || 0);
+const balance = orderTotalMXN(order) - Number(order.paid || 0);
 
 if (amount <= 0) {
   setMessage("El monto debe ser mayor a $0.");
@@ -92,44 +93,16 @@ if (amount > balance) {
   );
   return;
 }
-    const { error } = await s.from("payments").insert({
-      user_id: user.id, order_id: form.order_id || null, amount, method: form.method
+    const { error } = await s.rpc("register_order_payment", {
+      p_order_id: order.id,
+      p_amount: amount,
+      p_method: form.method,
     });
 
-    if (error) { setMessage(error.message); return; }
-
-  
-if (form.order_id) {
-  const order = orders.find((o) => o.id === form.order_id);
-
-  if (order) {
-    const newPaid = Number(order.paid || 0) + amount;
-    const total = Number(order.total || 0);
-
-    let newStatus = order.status || "Nuevo";
-
-    if (newPaid <= 0) {
-      newStatus = "Nuevo";
-    } else if (newPaid < total) {
-      newStatus = "Apartado";
-    } else if (newPaid >= total) {
-      newStatus = "Pagado";
-    }
-
-    const { error: updateError } = await s
-      .from("orders")
-      .update({
-        paid: newPaid,
-        status: newStatus,
-      })
-      .eq("id", form.order_id);
-
-    if (updateError) {
-      setMessage(updateError.message);
+    if (error) {
+      setMessage("No se pudo registrar el pago: " + error.message);
       return;
     }
-  }
-}
 
     setForm({ order_id: "", amount: "", method: "Transferencia" });
     setMessage("Pago registrado.");
@@ -137,7 +110,7 @@ if (form.order_id) {
   }
 const pendingOrders = orders.filter((order) => {
   const balance =
-    Number(order.total || 0) - Number(order.paid || 0);
+    orderTotalMXN(order) - Number(order.paid || 0);
 
   return balance > 0 && order.status !== "Cancelado";
 });
@@ -148,7 +121,7 @@ const selectedOrder = orders.find(
 const selectedBalance = selectedOrder
   ? Math.max(
       0,
-      Number(selectedOrder.total || 0) -
+      orderTotalMXN(selectedOrder) -
         Number(selectedOrder.paid || 0)
     )
   : 0;
@@ -175,7 +148,7 @@ console.log("PEDIDOS PENDIENTES:", pendingOrders);
   {o.order_number || "Pedido"} —{" "}
   {o.customer_name || "Cliente"} —{" "}
   {o.product} — saldo $
-  {(Number(o.total) - Number(o.paid)).toFixed(2)}
+  {(orderTotalMXN(o) - Number(o.paid)).toFixed(2)}
 </option>
     ))}
   </select>
@@ -198,7 +171,7 @@ console.log("PEDIDOS PENDIENTES:", pendingOrders);
       </div>
       <div>
         <strong>Total:</strong> $
-        {Number(selectedOrder.total || 0).toFixed(2)}
+        {orderTotalMXN(selectedOrder).toFixed(2)}
       </div>
       <div>
         <strong>Pagado:</strong> $

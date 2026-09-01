@@ -4,7 +4,14 @@ export type ReportOrder = {
   paid?: number | null;
   status?: string | null;
   source?: string | null;
-  created_at: string;
+  created_at?: string;
+};
+
+export type OrderSummary = {
+  sales: number;
+  paid: number;
+  balance: number;
+  orders: number;
 };
 
 export function orderTotalMXN(order: ReportOrder) {
@@ -40,8 +47,8 @@ export function inDateRange(
   return true;
 }
 
-export function summarizeOrders(orders: ReportOrder[]) {
-  return orders.filter(isActiveOrder).reduce(
+export function summarizeOrders(orders: ReportOrder[]): OrderSummary {
+  return orders.filter(isActiveOrder).reduce<OrderSummary>(
     (summary, order) => {
       const total = orderTotalMXN(order);
       const paid = Math.max(0, Number(order.paid ?? 0));

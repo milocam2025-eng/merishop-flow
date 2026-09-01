@@ -318,70 +318,26 @@ async function registerPayment(order: Order) {
 
   const supabase = createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    setMessage(
-      "Tu sesión terminó. Inicia sesión nuevamente."
-    );
-    return;
-  }
-
-  const {
-    data: payment,
-    error: paymentError,
-  } = await supabase
-    .from("payments")
-    .insert({
-      user_id: user.id,
-      order_id: order.id,
-      amount,
-      method: paymentMethod,
-    })
-    .select("id")
-    .single();
-
-  if (paymentError) {
-    setMessage(
-      "No se pudo guardar el pago: " +
-        paymentError.message
-    );
-    return;
-  }
-
-  const newPaid =
-    alreadyPaid + amount;
-
-  const newStatus =
-    newPaid >= totalOrder
-      ? "Pagado"
-      : order.status;
-
-  const { error: orderError } =
-    await supabase
-      .from("orders")
-      .update({
-        paid: newPaid,
-        status: newStatus,
-      })
-      .eq("id", order.id);
-
-  if (orderError) {
-    if (payment?.id) {
-      await supabase
-        .from("payments")
-        .delete()
-        .eq("id", payment.id);
+  const { data, error } = await supabase.rpc(
+    "register_order_payment",
+    {
+      p_order_id: order.id,
+      p_amount: amount,
+      p_method: paymentMethod,
     }
+  );
 
-    setMessage(
-      "No se pudo actualizar el pedido: " +
-        orderError.message
-    );
+  if (error) {
+    setMessage("No se pudo registrar el pago: " + error.message);
     return;
   }
+
+  const paymentResult = data as {
+    paid: number;
+    status: string;
+  };
+  const newPaid = Number(paymentResult.paid);
+  const newStatus = paymentResult.status;
 
   setSelectedOrder({
     ...order,
@@ -1174,7 +1130,7 @@ onChange={(e) => {
     </button>
   )}
 
-  {validWhatsAppPhone(
+{validWhatsAppPhone(
   row.customer_phone ||
     clients.find((client) => client.id === row.client_id)?.phone
 ) && (
