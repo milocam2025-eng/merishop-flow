@@ -1,4 +1,8 @@
-export type Client = {\n  id: string;\n  name: string;\n  phone?: string | null;\n};
+export type Client = {
+  id: string;
+  name: string;
+  phone?: string | null;
+};
 
 export type InventorySummary = {
   id: string;
@@ -50,7 +54,16 @@ export type Payment = {
   created_at: string;
 };
 
-export type OrderStatusHistory = {\n  id: string;\n  order_id: string;\n  previous_status: string | null;\n  new_status: string;\n  source: string;\n  created_at: string;\n};\n\nexport type PublishableInventoryProduct = {
+export type OrderStatusHistory = {
+  id: string;
+  order_id: string;
+  previous_status: string | null;
+  new_status: string;
+  source: string;
+  created_at: string;
+};
+
+export type PublishableInventoryProduct = {
   id: string;
   product: string;
   brand?: string | null;
