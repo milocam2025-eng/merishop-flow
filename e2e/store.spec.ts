@@ -26,9 +26,10 @@ test("the public store exposes search and cart navigation", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "Tenis Nike" })).not.toBeVisible();
   await page.getByRole("button", { name: "🛒 Agregar al carrito" }).click();
   await expect(page.getByRole("status")).toContainText("se agregó al carrito");
-  await expect(page.getByRole("link", { name: /Ver carrito \(1\)/ })).toBeVisible();
+  const headerCartLink = page.getByRole("link", { name: /Ver carrito \(1\)/ });
+  await expect(headerCartLink).toBeVisible();
 
-  await page.getByRole("link", { name: /Ver carrito/ }).click();
+  await headerCartLink.click();
   await expect(page).toHaveURL(/\/carrito$/);
   await expect(page.getByRole("heading", { name: "Bolsa Coach" })).toBeVisible();
 });
