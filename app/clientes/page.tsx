@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import AuthGuard from "@/components/AuthGuard";
+import { normalizePhone, validWhatsAppPhone } from "@/lib/order-followup";
 import { createClient } from "@/lib/supabase/client";
 
 type ClientRow = {
@@ -54,6 +55,10 @@ export default function ClientesPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (form.phone.trim() && !validWhatsAppPhone(form.phone)) {
+      setMessage("Escribe un WhatsApp válido de 10 a 15 dígitos, incluyendo código de país.");
+      return;
+    }
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -61,7 +66,7 @@ export default function ClientesPage() {
     const payload: Record<string, string | null> = {
       user_id: user.id,
       name: form.name.trim(),
-      phone: form.phone.trim() || null,
+      phone: form.phone.trim() ? normalizePhone(form.phone) : null,
       email: form.email.trim() || null,
       location: form.location.trim() || null
     };

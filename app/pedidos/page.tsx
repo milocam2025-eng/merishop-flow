@@ -5,8 +5,9 @@ import AppShell from "@/components/AppShell";
 import AuthGuard from "@/components/AuthGuard";
 import StatusBadge from "@/components/StatusBadge";
 import HeaderMetrics from "@/components/HeaderMetrics";
-import type { Client, InventorySummary, Order, Payment } from "@/lib/domain";
+import type { Client, InventorySummary, Order, OrderStatusHistory, Payment } from "@/lib/domain";
 import { formatMXN } from "@/lib/formatters";
+import { buildOrderFollowUp, validWhatsAppPhone, whatsappOrderUrl } from "@/lib/order-followup";
 import { createClient } from "@/lib/supabase/client";
 
 export default function PedidosPage() {
@@ -19,6 +20,8 @@ export default function PedidosPage() {
 
   const [paymentHistory, setPaymentHistory] =
     useState<Payment[]>([]);
+  const [statusHistory, setStatusHistory] =
+    useState<OrderStatusHistory[]>([]);
 
   const [showPaymentForm, setShowPaymentForm] =
     useState(false);
@@ -44,7 +47,7 @@ export default function PedidosPage() {
     const supabase = createClient();
     const [clientResult, inventoryResult, orderResult] =
 await Promise.all([
-      supabase.from("clients").select("id,name").order("name"),
+      supabase.from("clients").select("id,name,phone").order("name"),
 supabase
     .from("inventory")
     .select("id,product,quantity,minimum_stock,cost_usd,tax_usd,shipping_usd")
@@ -181,6 +184,10 @@ async function cancelOrder(order: Order) {
       : "Pedido cancelado y unidad devuelta al inventario."
   );
 
+  if (selectedOrder?.id === order.id) {
+    setSelectedOrder({ ...order, status: "Cancelado" });
+    await loadStatusHistory(order.id);
+  }
   load();
 }
 async function confirmOrder(order: Order) {
@@ -224,45 +231,33 @@ async function confirmOrder(order: Order) {
     status: "Confirmado",
   });
 
+  await loadStatusHistory(order.id);
   load();
 }
 
 function contactCustomer(order: Order) {
-  const phone = String(
-    order.customer_phone || ""
-  ).replace(/\D/g, "");
+  const linkedClient = clients.find(
+    (client) => client.id === order.client_id
+  );
+  const phone = order.customer_phone || linkedClient?.phone || "";
 
-  if (!phone) {
+  if (!validWhatsAppPhone(phone)) {
     alert(
-      "Este pedido no tiene número de WhatsApp."
+      "Este pedido no tiene un número de WhatsApp válido."
     );
     return;
   }
 
-  const message = [
-    "Hola",
-    order.customer_name
-      ? ` ${order.customer_name},`
-      : ",",
-    "",
-    "Te contactamos de MeriShop.",
-    "",
-    order.order_number
-      ? `Pedido: ${order.order_number}`
-      : "",
-    "",
-    "Tu pedido fue recibido. Estamos confirmando disponibilidad, pago y entrega.",
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  const url =
-    `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(
-      message
-    )}`;
+  const message = buildOrderFollowUp({
+    orderNumber: order.order_number || order.id,
+    customerName: order.customer_name || linkedClient?.name || "cliente",
+    status: order.status,
+    total: orderTotal(order),
+    paid: Number(order.paid || 0),
+  });
 
   window.open(
-    url,
+    whatsappOrderUrl(phone, message),
     "_blank",
     "noopener,noreferrer"
   );
@@ -395,6 +390,7 @@ async function registerPayment(order: Order) {
   });
 
   await loadPayments(order.id);
+  await loadStatusHistory(order.id);
 
   setPaymentAmount("");
   setPaymentMethod("Transferencia");
@@ -435,6 +431,23 @@ async function loadPayments(orderId: string) {
   setPaymentHistory(
     (data || []) as Payment[]
   );
+}
+
+async function loadStatusHistory(orderId: string) {
+  const { data, error } = await createClient()
+    .from("order_status_history")
+    .select("id,order_id,previous_status,new_status,source,created_at")
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error("Error cargando historial del pedido:", error);
+    setStatusHistory([]);
+    return;
+  }
+
+  setStatusHistory((data || []) as OrderStatusHistory[]);
 }
 const clientName = (id: string | null) =>
   clients.find((c) => c.id === id)?.name || "-";
@@ -653,11 +666,15 @@ onChange={(e) => {
     if (selectedOrder?.id === row.id) {
       setSelectedOrder(null);
       setPaymentHistory([]);
+      setStatusHistory([]);
       return;
     }
 
     setSelectedOrder(row);
-    await loadPayments(row.id);
+    await Promise.all([
+      loadPayments(row.id),
+      loadStatusHistory(row.id),
+    ]);
   }}
 >
   {selectedOrder?.id === row.id
@@ -1078,6 +1095,59 @@ onChange={(e) => {
 </div>
 <div
   style={{
+    marginTop: 26,
+    paddingTop: 22,
+    borderTop: "1px solid #e2e8f0",
+  }}
+>
+  <h3 style={{ marginTop: 0 }}>Historial del pedido</h3>
+  {statusHistory.length === 0 ? (
+    <p style={{ color: "#64748b" }}>
+      Todavía no hay cambios de estado registrados.
+    </p>
+  ) : (
+    <div style={{ display: "grid", gap: 10 }}>
+      {statusHistory.map((entry) => (
+        <div
+          key={entry.id}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "12px minmax(0, 1fr)",
+            gap: 10,
+            alignItems: "start",
+          }}
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              width: 10,
+              height: 10,
+              marginTop: 6,
+              borderRadius: "50%",
+              background: "#2563eb",
+            }}
+          />
+          <div>
+            <strong>
+              {entry.previous_status
+                ? `${entry.previous_status} → ${entry.new_status}`
+                : `Pedido creado como ${entry.new_status}`}
+            </strong>
+            <div style={{ color: "#64748b", fontSize: 14 }}>
+              {new Date(entry.created_at).toLocaleString("es-MX", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+              {entry.source === "public_store" ? " · Tienda online" : " · Administración"}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+<div
+  style={{
     display: "flex",
     gap: 12,
     flexWrap: "wrap",
@@ -1104,7 +1174,10 @@ onChange={(e) => {
     </button>
   )}
 
-  {row.customer_phone && (
+  {validWhatsAppPhone(
+  row.customer_phone ||
+    clients.find((client) => client.id === row.client_id)?.phone
+) && (
     <button
       type="button"
       onClick={() =>

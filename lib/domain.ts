@@ -1,4 +1,8 @@
-export type Client = { id: string; name: string };
+export type Client = {
+  id: string;
+  name: string;
+  phone?: string | null;
+};
 
 export type InventorySummary = {
   id: string;
@@ -47,6 +51,15 @@ export type Payment = {
   order_id: string;
   amount: number;
   method: string;
+  created_at: string;
+};
+
+export type OrderStatusHistory = {
+  id: string;
+  order_id: string;
+  previous_status: string | null;
+  new_status: string;
+  source: string;
   created_at: string;
 };
 
