@@ -4,6 +4,12 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import {
+  addCartItem,
+  CART_STORAGE_KEY,
+  CART_UPDATED_EVENT,
+  parseStoredCart,
+} from "@/lib/store-cart";
 
 type Product = {
   id: string;
@@ -170,61 +176,9 @@ const [selectedImage, setSelectedImage] =
 function addToCart() {
   if (!product) return;
 
-  const savedCart =
-    localStorage.getItem("merishop_cart");
-
-  let cart: any[] = [];
-
-  if (savedCart) {
-    try {
-      cart = JSON.parse(savedCart);
-
-      if (!Array.isArray(cart)) {
-        cart = [];
-      }
-    } catch {
-      cart = [];
-    }
-  }
-
-  const existingIndex =
-    cart.findIndex(
-      (item) => item.id === product.id
-    );
-
-if (existingIndex >= 0) {
-  const currentQuantity =
-    Number(
-      cart[existingIndex].quantity ?? 1
-    );
-
-  const maxStock =
-    Number(product.quantity ?? 0);
-
-  if (
-    maxStock > 0 &&
-    currentQuantity >= maxStock
-  ) {
-    alert(
-      `Solo hay ${maxStock} ${
-        maxStock === 1
-          ? "unidad disponible"
-          : "unidades disponibles"
-      } de ${product.product}.`
-    );
-
-    return;
-  }
-
-  cart[existingIndex].quantity =
-    currentQuantity + 1;
-
-  cart[existingIndex].stock =
-    maxStock;
-}
-
-     else {
-    cart.push({
+  const result = addCartItem(
+    parseStoredCart(localStorage.getItem(CART_STORAGE_KEY)),
+    {
       id: product.id,
       product: product.product,
       brand: product.brand,
@@ -239,13 +193,19 @@ if (existingIndex >= 0) {
         "",   
       stock: Number(product.quantity ?? 0),
       quantity: 1,
-    });
+    }
+  );
+
+  if (!result.added) {
+    alert(result.reason ?? "No se pudo agregar el producto.");
+    return;
   }
 
   localStorage.setItem(
-    "merishop_cart",
-    JSON.stringify(cart)
+    CART_STORAGE_KEY,
+    JSON.stringify(result.items)
   );
+  window.dispatchEvent(new Event(CART_UPDATED_EVENT));
 
   alert(
     `${product.product} fue agregado al carrito.`

@@ -3,6 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import {
+  addCartItem,
+  cartItemCount,
+  CART_STORAGE_KEY,
+  CART_UPDATED_EVENT,
+  parseStoredCart,
+} from "@/lib/store-cart";
 
 type StoreProduct = {
   id: string;
@@ -38,6 +45,9 @@ export default function TiendaPage() {
 
   const [category, setCategory] =
     useState("Todos");
+
+  const [sort, setSort] = useState("recommended");
+  const [notice, setNotice] = useState("");
 
 const [cartCount, setCartCount] =
   useState(0);
@@ -81,33 +91,7 @@ const [cartCount, setCartCount] =
   }, []);
 useEffect(() => {
   function loadCartCount() {
-    const savedCart =
-      localStorage.getItem("merishop_cart");
-
-    if (!savedCart) {
-      setCartCount(0);
-      return;
-    }
-
-    try {
-      const cart = JSON.parse(savedCart);
-
-      if (!Array.isArray(cart)) {
-        setCartCount(0);
-        return;
-      }
-
-      const totalItems = cart.reduce(
-        (total, item) =>
-          total +
-          Number(item.quantity ?? 1),
-        0
-      );
-
-      setCartCount(totalItems);
-    } catch {
-      setCartCount(0);
-    }
+    setCartCount(cartItemCount(parseStoredCart(localStorage.getItem(CART_STORAGE_KEY))));
   }
 
   loadCartCount();
@@ -116,12 +100,14 @@ useEffect(() => {
     "focus",
     loadCartCount
   );
+  window.addEventListener(CART_UPDATED_EVENT, loadCartCount);
 
   return () => {
     window.removeEventListener(
       "focus",
       loadCartCount
     );
+    window.removeEventListener(CART_UPDATED_EVENT, loadCartCount);
   };
 }, []);
 
@@ -135,7 +121,7 @@ useEffect(() => {
 
   return [
     "Todos",
-    ...Array.from(new Set(values)),
+    ...Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, "es")),
   ];
 }, [products]);
 
@@ -146,7 +132,7 @@ useEffect(() => {
           .trim()
           .toLowerCase();
 
-      return products.filter(
+      const matches = products.filter(
         (item) => {
           const matchesSearch =
             !q ||
@@ -175,11 +161,42 @@ useEffect(() => {
           );
         }
       );
+
+      return [...matches].sort((a, b) => {
+        if (sort === "price-asc") return Number(a.sale_price_mxn ?? 0) - Number(b.sale_price_mxn ?? 0);
+        if (sort === "price-desc") return Number(b.sale_price_mxn ?? 0) - Number(a.sale_price_mxn ?? 0);
+        if (sort === "name") return a.product.localeCompare(b.product, "es");
+        return 0;
+      });
     }, [
       products,
       search,
       category,
+      sort,
     ]);
+
+  function addProductToCart(item: StoreProduct) {
+    const current = parseStoredCart(localStorage.getItem(CART_STORAGE_KEY));
+    const result = addCartItem(current, {
+      id: item.id,
+      product: item.product,
+      brand: item.brand,
+      size: item.size,
+      price: Number(item.sale_price_mxn ?? 0),
+      image: item.image_url ?? "",
+      stock: Number(item.quantity ?? 0),
+      quantity: 1,
+    });
+
+    if (!result.added) {
+      setNotice(result.reason ?? "No se pudo agregar el producto.");
+      return;
+    }
+
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(result.items));
+    window.dispatchEvent(new Event(CART_UPDATED_EVENT));
+    setNotice(`${item.product} se agregó al carrito.`);
+  }
 
   function buyProduct(
     item: StoreProduct
@@ -322,7 +339,7 @@ const url =
         fontWeight: 700,
       }}
     >
-      ← Volver a Inventario
+      ⚙ Administrar inventario
     </Link>
   </div>
 
@@ -330,6 +347,7 @@ const url =
 
         <input
           type="text"
+          aria-label="Buscar productos"
           value={search}
           onChange={(e) =>
             setSearch(
@@ -347,6 +365,22 @@ const url =
             marginBottom: 20,
           }}
         />
+
+        <div className="store-toolbar">
+          <p aria-live="polite">
+            <strong>{filteredProducts.length}</strong>{" "}
+            {filteredProducts.length === 1 ? "producto" : "productos"}
+          </p>
+          <label>
+            Ordenar por
+            <select value={sort} onChange={(event) => setSort(event.target.value)}>
+              <option value="recommended">Recomendados</option>
+              <option value="price-asc">Precio: menor a mayor</option>
+              <option value="price-desc">Precio: mayor a menor</option>
+              <option value="name">Nombre</option>
+            </select>
+          </label>
+        </div>
 
         {/* CATEGORÍAS */}
 
@@ -396,6 +430,26 @@ cursor: "pointer",
             )
           )}
         </div>
+
+        {(search || category !== "Todos") && (
+          <button
+            type="button"
+            className="store-clear-filters"
+            onClick={() => {
+              setSearch("");
+              setCategory("Todos");
+            }}
+          >
+            Limpiar filtros
+          </button>
+        )}
+
+        {notice && (
+          <div className="store-notice" role="status">
+            <span>{notice}</span>
+            <Link href="/carrito">Ver carrito</Link>
+          </div>
+        )}
 
         {loading && (
           <p>
@@ -591,7 +645,9 @@ cursor: "pointer",
                         15,
                     }}
                   >
-                    ✓ Disponible
+                    {Number(item.quantity) <= 2
+                      ? `Quedan ${item.quantity} ${item.quantity === 1 ? "unidad" : "unidades"}`
+                      : "✓ Disponible"}
                   </div>
 
                  <div
@@ -618,6 +674,14 @@ cursor: "pointer",
   >
     👁 Ver producto
   </Link>
+
+  <button
+    type="button"
+    onClick={() => addProductToCart(item)}
+    className="store-add-button"
+  >
+    🛒 Agregar al carrito
+  </button>
 
   <button
     type="button"

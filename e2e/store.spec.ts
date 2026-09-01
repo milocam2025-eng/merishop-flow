@@ -1,20 +1,41 @@
 import { expect, test } from "@playwright/test";
 
 test("the public store exposes search and cart navigation", async ({ page }) => {
-  await page.route("**/rest/v1/rpc/list_store_products", (route) =>
-    route.fulfill({ status: 200, contentType: "application/json", json: [] })
-  );
+  await page.route("**/*", (route) => {
+    if (!route.request().url().includes("/rpc/list_store_products")) {
+      return route.continue();
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      json: [
+        { id: "1", product: "Bolsa Coach", brand: "Coach", category: "Bolsas", sale_price_mxn: 675, quantity: 2, status: "Disponible" },
+        { id: "2", product: "Tenis Nike", brand: "Nike", category: "Calzado", sale_price_mxn: 1200, quantity: 1, status: "Stock bajo" },
+      ],
+    });
+  });
 
   await page.goto("/tienda");
   await expect(page.getByRole("heading", { name: "MeriShop" })).toBeVisible();
   await expect(page.getByPlaceholder("🔎 Buscar productos...")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bolsa Coach" })).toBeVisible();
+  await expect(page.getByText("2 productos")).toBeVisible();
 
-  await page.getByRole("link", { name: /Ver carrito/ }).click();
+  await page.getByPlaceholder("🔎 Buscar productos...").fill("Coach");
+  await expect(page.getByRole("heading", { name: "Bolsa Coach" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tenis Nike" })).not.toBeVisible();
+  await page.getByRole("button", { name: "🛒 Agregar al carrito" }).click();
+  await expect(page.getByRole("status")).toContainText("se agregó al carrito");
+  const headerCartLink = page.getByRole("link", { name: /Ver carrito \(1\)/ });
+  await expect(headerCartLink).toBeVisible();
+
+  await headerCartLink.click();
   await expect(page).toHaveURL(/\/carrito$/);
-  await expect(page.getByText("Tu carrito está vacío")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bolsa Coach" })).toBeVisible();
 });
 
 test("the empty cart offers a route back to the store", async ({ page }) => {
+  await page.addInitScript(() => localStorage.removeItem("merishop_cart"));
   await page.goto("/carrito");
 
   await expect(page.getByText("Tu carrito está vacío")).toBeVisible();
