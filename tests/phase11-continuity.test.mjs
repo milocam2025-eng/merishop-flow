@@ -18,10 +18,29 @@ const audit = fs.readFileSync(
   new URL("../supabase/audit_phase11_continuity.sql", import.meta.url),
   "utf8"
 );
+const cancellationRepair = fs.readFileSync(
+  new URL("../supabase/repair_phase11_cancel_order_function.sql", import.meta.url),
+  "utf8"
+);
 
 test("audits the cancellation function used by the application", () => {
   assert.match(audit, /cancel_order_and_restore_inventory/i);
   assert.doesNotMatch(audit, /cancel_store_order/i);
+});
+
+test("repairs cancellation atomically with restricted execution", () => {
+  assert.match(cancellationRepair, /begin;/i);
+  assert.match(
+    cancellationRepair,
+    /create or replace function public\.cancel_order_and_restore_inventory/i
+  );
+  assert.match(cancellationRepair, /for update;/i);
+  assert.match(cancellationRepair, /inventory_reserved = false/i);
+  assert.match(
+    cancellationRepair,
+    /grant execute .* to authenticated/i
+  );
+  assert.match(cancellationRepair, /commit;/i);
 });
 
 test("keeps a private migration registry", () => {

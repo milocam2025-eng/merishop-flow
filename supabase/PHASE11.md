@@ -6,9 +6,10 @@ Esta fase añade una comprobación real de conexión a la base de datos, un regi
 
 1. En Supabase SQL Editor, ejecuta `audit_phase11_continuity.sql`.
 2. Confirma que todos los resultados sean `0`. La comprobación `MIGRACION FASE 11 YA REGISTRADA` también debe ser `0` antes de la primera aplicación.
-3. Ejecuta `migration_phase11_continuity.sql`.
-4. Ejecuta `verify_phase11_continuity.sql`; la fila debe mostrar `true` en todas las columnas.
-5. Despliega la rama y abre `/api/health`. Debe responder HTTP 200 con `status: "ok"` y `checks.database: "ok"`.
+3. Si la única función ausente es `cancel_order_and_restore_inventory`, ejecuta `repair_phase11_cancel_order_function.sql` y repite la auditoría. No ejecutes la reparación si la auditoría ya está en cero.
+4. Ejecuta `migration_phase11_continuity.sql`.
+5. Ejecuta `verify_phase11_continuity.sql`; la fila debe mostrar `true` en todas las columnas.
+6. Despliega la rama y abre `/api/health`. Debe responder HTTP 200 con `status: "ok"` y `checks.database: "ok"`.
 
 Si el health check no puede consultar Supabase, responde HTTP 503 con `status: "degraded"`. La respuesta no expone credenciales ni detalles internos del error.
 
