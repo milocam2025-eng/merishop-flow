@@ -847,6 +847,8 @@ table {
 .store-footer a { color: #d8e3ee; text-decoration: none; }
 .store-footer a:hover { color: #fff; text-decoration: underline; }
 .store-footer-brand { color: #f3225a !important; }
+.store-footer-brand span:first-child { color: #f3225a; }
+.store-footer-brand span:last-child { color: #72b7ef; }
 .store-footer-bottom { margin-top: 42px; padding-top: 22px; display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid #28445f; font-size: 14px; }
 
 .store-public-page { min-height: 100vh; background: #f7f9fc; }

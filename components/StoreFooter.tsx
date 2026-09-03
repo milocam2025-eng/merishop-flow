@@ -5,7 +5,9 @@ export default function StoreFooter() {
     <footer className="store-footer">
       <div className="store-footer-grid">
         <div>
-          <Link className="store-footer-brand" href="/tienda">MeriShop</Link>
+          <Link className="store-footer-brand" href="/tienda" aria-label="MeriShop">
+            <span>Meri</span><span>Shop</span>
+          </Link>
           <p>
             Compras seleccionadas en Estados Unidos con atención personalizada
             para nuestros clientes en México.
