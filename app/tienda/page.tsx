@@ -245,7 +245,9 @@ const url =
     >
       <header className="store-main-header">
         <div className="store-main-nav">
-          <Link className="store-logo" href="/tienda">MeriShop</Link>
+          <Link className="store-logo" href="/tienda" aria-label="MeriShop">
+            <span>Meri</span><span>Shop</span>
+          </Link>
           <nav aria-label="Navegación principal">
             <a href="#productos">Productos</a>
             <Link href="/acerca">Nosotros</Link>
