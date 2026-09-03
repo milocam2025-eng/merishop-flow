@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import StoreFooter from "@/components/StoreFooter";
 import {
   addCartItem,
   cartItemCount,
@@ -242,75 +243,57 @@ const url =
           "#f8fafc",
       }}
     >
-      {/* ENCABEZADO */}
-
-      <header
-        style={{
-          background:
-            "#0f2d4d",
-          color: "#ffffff",
-          padding:
-            "28px 20px",
-        }}
-      >
- <div
-  style={{
-    maxWidth: 1200,
-    margin: "0 auto",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 20,
-    flexWrap: "wrap",
-  }}
->       
-          <h1
-            style={{
-              margin: 0,
-              fontSize: 36,
-            }}
-          >
-            <span
-              style={{
-                color:
-                  "#ed174c",
-              }}
-            >
-              MeriShop
-            </span>
-          </h1>
-
-          <p
-            style={{
-              marginTop: 8,
-              marginBottom: 0,
-              opacity: 0.9,
-            }}
-          >
-            Productos disponibles
-            para compra
-          </p>
-<Link
-  href="/carrito"
-  style={{
-    display: "inline-block",
-    padding: "12px 18px",
-    borderRadius: 12,
-    background: "#ffffff",
-    color: "#0f2d4d",
-    fontWeight: 800,
-    textDecoration: "none",
-    whiteSpace: "nowrap",
-  }}
->
-  🛒 Ver carrito
-{cartCount > 0 && ` (${cartCount})`}
-
-</Link>
+      <header className="store-main-header">
+        <div className="store-main-nav">
+          <Link className="store-logo" href="/tienda">MeriShop</Link>
+          <nav aria-label="Navegación principal">
+            <a href="#productos">Productos</a>
+            <Link href="/acerca">Nosotros</Link>
+            <Link href="/como-comprar">Cómo comprar</Link>
+            <Link href="/contacto">Contacto</Link>
+          </nav>
+          <Link className="store-cart-link" href="/carrito">
+            🛒 Carrito{cartCount > 0 && ` (${cartCount})`}
+          </Link>
         </div>
       </header>
 
+      <section className="store-hero">
+        <div>
+          <span className="store-kicker">Compras seleccionadas en Estados Unidos</span>
+          <h1>Productos especiales, atención personal y compras con confianza</h1>
+          <p>
+            Descubre productos seleccionados y confirma tu compra directamente
+            con MeriShop. Te acompañamos desde tu pedido hasta la entrega.
+          </p>
+          <div className="store-hero-actions">
+            <a className="store-primary-link" href="#productos">Ver productos</a>
+            <a
+              className="store-secondary-link"
+              href="https://wa.me/18402792847?text=Hola%20MeriShop%2C%20quiero%20informaci%C3%B3n."
+              target="_blank"
+              rel="noreferrer"
+            >
+              Hablar por WhatsApp
+            </a>
+          </div>
+        </div>
+        <aside className="store-hero-card" aria-label="Beneficios de MeriShop">
+          <div><strong>✓ Atención personalizada</strong><span>Resolvemos tus dudas antes de comprar.</span></div>
+          <div><strong>✓ Compra confirmada</strong><span>Validamos existencia y pago contigo.</span></div>
+          <div><strong>✓ Seguimiento directo</strong><span>Te acompañamos hasta la entrega.</span></div>
+        </aside>
+      </section>
+
+      <section className="store-trust-strip" aria-label="Ventajas de comprar en MeriShop">
+        <div><span>🛍️</span><strong>Selección especial</strong><small>Productos elegidos para nuestros clientes</small></div>
+        <div><span>💬</span><strong>Atención humana</strong><small>Confirmación personal por WhatsApp</small></div>
+        <div><span>🔒</span><strong>Proceso claro</strong><small>Precios y condiciones antes del pago</small></div>
+        <div><span>📦</span><strong>Seguimiento</strong><small>Información sobre pedido y entrega</small></div>
+      </section>
+
       <div
+        id="productos"
         style={{
           maxWidth: 1200,
           margin: "0 auto",
@@ -318,30 +301,11 @@ const url =
             "30px 20px 60px",
         }}
       >
-  {/* VOLVER A INVENTARIO */}
-
-  <div
-    style={{
-      marginBottom: 20,
-    }}
-  >
-    <Link
-      href="/inventario"
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "11px 18px",
-        borderRadius: 10,
-        background: "#0f355d",
-        color: "#ffffff",
-        textDecoration: "none",
-        fontWeight: 700,
-      }}
-    >
-      ⚙ Administrar inventario
-    </Link>
-  </div>
+        <div className="store-catalog-heading">
+          <span>Catálogo</span>
+          <h2>Productos disponibles</h2>
+          <p>Elige tus favoritos y confirma disponibilidad con nosotros.</p>
+        </div>
 
         {/* BUSCADOR */}
 
@@ -711,6 +675,23 @@ cursor: "pointer",
           )}
         </div>
       </div>
+      <section className="store-about-preview">
+        <div>
+          <span className="store-kicker">Tu personal shopper de confianza</span>
+          <h2>Comprar desde Estados Unidos puede ser fácil</h2>
+          <p>
+            En MeriShop seleccionamos productos y ofrecemos un proceso acompañado,
+            con comunicación directa y seguimiento organizado.
+          </p>
+          <Link href="/acerca">Conoce más sobre MeriShop →</Link>
+        </div>
+        <div className="store-process-preview">
+          <div><b>1</b><span><strong>Elige</strong><small>Explora el catálogo</small></span></div>
+          <div><b>2</b><span><strong>Confirma</strong><small>Revisa por WhatsApp</small></span></div>
+          <div><b>3</b><span><strong>Recibe</strong><small>Da seguimiento a tu pedido</small></span></div>
+        </div>
+      </section>
+      <StoreFooter />
     </main>
   );
 }
