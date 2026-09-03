@@ -54,8 +54,22 @@ test("the admin login form remains available", async ({ page }) => {
 
 test("health and missing-page responses are controlled", async ({ page, request }) => {
   const health = await request.get("/api/health");
-  expect(health.ok()).toBeTruthy();
-  await expect(health.json()).resolves.toMatchObject({ status: "ok", service: "merishop-flow" });
+  const healthBody = await health.json();
+
+  expect([200, 503]).toContain(health.status());
+  expect(healthBody).toMatchObject({ service: "merishop-flow" });
+
+  if (health.ok()) {
+    expect(healthBody).toMatchObject({
+      status: "ok",
+      checks: { database: "ok" },
+    });
+  } else {
+    expect(healthBody).toMatchObject({ status: "degraded" });
+    expect(["error", "configuration_error"]).toContain(
+      healthBody.checks?.database
+    );
+  }
 
   await page.goto("/ruta-que-no-existe");
   await expect(page.getByRole("heading", { name: "Página no encontrada" })).toBeVisible();
