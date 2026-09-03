@@ -25,7 +25,9 @@ union all
 
 select 'FUNCION ESENCIAL AUSENTE', count(*)
 from (values
-  ('create_store_order'), ('cancel_store_order'), ('register_order_payment')
+  ('create_store_order'),
+  ('cancel_order_and_restore_inventory'),
+  ('register_order_payment')
 ) as required_function(function_name)
 where not exists (
   select 1

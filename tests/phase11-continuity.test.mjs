@@ -14,6 +14,15 @@ const backupScript = fs.readFileSync(
   new URL("../scripts/backup-database.sh", import.meta.url),
   "utf8"
 );
+const audit = fs.readFileSync(
+  new URL("../supabase/audit_phase11_continuity.sql", import.meta.url),
+  "utf8"
+);
+
+test("audits the cancellation function used by the application", () => {
+  assert.match(audit, /cancel_order_and_restore_inventory/i);
+  assert.doesNotMatch(audit, /cancel_store_order/i);
+});
 
 test("keeps a private migration registry", () => {
   assert.match(migration, /create table if not exists public\.schema_migrations/i);
