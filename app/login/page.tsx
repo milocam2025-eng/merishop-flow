@@ -50,31 +50,6 @@ export default function LoginPage() {
     router.push("/dashboard");
   }
 
-  async function register() {
-    if (!email || !password) {
-      setMessage("Escribe correo y contraseña.");
-      return;
-    }
-
-    setMessage("Creando cuenta...");
-
-    const supabase = createClient();
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
-
-    setMessage(
-      "Cuenta creada. Revisa tu correo si Supabase solicita confirmación."
-    );
-  }
-
   async function forgotPassword() {
     if (!email) {
       setMessage("Escribe primero tu correo.");
@@ -132,7 +107,7 @@ export default function LoginPage() {
 
         <h1>MeriShop Flow Pro</h1>
 
-        <p>Clientes, pedidos, pagos, inventario y envíos.</p>
+        <p>Acceso administrativo exclusivo para personal autorizado.</p>
 
         {recoveryMode ? (
           <>
@@ -177,14 +152,6 @@ export default function LoginPage() {
             </label>
 
             <button type="submit">Iniciar sesión</button>
-
-            <button
-              type="button"
-              className="secondary"
-              onClick={register}
-            >
-              Crear cuenta
-            </button>
 
             <button
               type="button"

@@ -41,7 +41,7 @@ export default function StoreFooter() {
       </div>
       <div className="store-footer-bottom">
         <span>© {new Date().getFullYear()} MeriShop. Todos los derechos reservados.</span>
-        <Link href="/login">Acceso administrativo</Link>
+        <span>Compras personalizadas con atención directa.</span>
       </div>
     </footer>
   );
