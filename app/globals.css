@@ -924,3 +924,70 @@ table {
     font-size: 13px;
   }
 }
+
+
+/* Fase 14: instalación móvil progresiva de la tienda. */
+.pwa-install-card {
+  max-width: 1200px;
+  margin: 32px auto 0;
+  padding: 22px 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border: 1px solid #d8e5f0;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 12px 34px rgba(13, 43, 75, .08);
+}
+
+.pwa-install-copy {
+  display: grid;
+  gap: 5px;
+}
+
+.pwa-install-copy strong {
+  color: #0d2b4b;
+  font-size: 18px;
+}
+
+.pwa-install-copy span {
+  color: #52647a;
+  line-height: 1.5;
+}
+
+.pwa-install-button {
+  min-height: 46px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: #f3225a;
+  color: #fff;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pwa-install-button:hover { background: #d9194d; }
+.pwa-install-button:focus-visible { outline: 3px solid #72b7ef; outline-offset: 3px; }
+
+.pwa-install-help {
+  width: 100%;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+  color: #334155;
+  line-height: 1.55;
+}
+
+@media (max-width: 560px) {
+  .pwa-install-card {
+    margin: 22px 16px 0;
+    padding: 20px;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pwa-install-button { width: 100%; }
+}

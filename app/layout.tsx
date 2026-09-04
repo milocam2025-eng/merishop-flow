@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 export const metadata: Metadata = {
-  title: "MeriShop Flow Pro",
-  description: "Sistema administrativo para MeriShop",
+  title: "MeriShop | Compras seleccionadas",
+  description: "Productos seleccionados y atención personalizada con MeriShop.",
 
   manifest: "/manifest.webmanifest",
 
@@ -38,4 +38,8 @@ export const metadata: Metadata = {
     title: "MeriShop",
   },
 };
+export const viewport: Viewport = {
+  themeColor: "#0d2b4b",
+};
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="es"><body>{children}</body></html>; }
