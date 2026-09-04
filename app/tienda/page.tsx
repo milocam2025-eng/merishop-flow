@@ -53,6 +53,9 @@ export default function TiendaPage() {
 const [cartCount, setCartCount] =
   useState(0);
 
+  const [isAdmin, setIsAdmin] =
+    useState(false);
+
   useEffect(() => {
     async function loadProducts() {
       setLoading(true);
@@ -90,6 +93,30 @@ const [cartCount, setCartCount] =
 
     loadProducts();
   }, []);
+useEffect(() => {
+  let active = true;
+
+  async function checkAdminSession() {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const { data, error } = await supabase.rpc("is_admin");
+    if (active && !error && data === true) {
+      setIsAdmin(true);
+    }
+  }
+
+  checkAdminSession();
+
+  return () => {
+    active = false;
+  };
+}, []);
+
 useEffect(() => {
   function loadCartCount() {
     setCartCount(cartItemCount(parseStoredCart(localStorage.getItem(CART_STORAGE_KEY))));
@@ -254,9 +281,16 @@ const url =
             <Link href="/como-comprar">Cómo comprar</Link>
             <Link href="/contacto">Contacto</Link>
           </nav>
-          <Link className="store-cart-link" href="/carrito">
-            🛒 Carrito{cartCount > 0 && ` (${cartCount})`}
-          </Link>
+          <div className="store-account-actions">
+            {isAdmin && (
+              <Link className="store-admin-return" href="/inventario">
+                ⚙ Inventario
+              </Link>
+            )}
+            <Link className="store-cart-link" href="/carrito">
+              🛒 Carrito{cartCount > 0 && ` (${cartCount})`}
+            </Link>
+          </div>
         </div>
       </header>
 

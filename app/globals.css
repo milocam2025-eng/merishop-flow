@@ -889,3 +889,38 @@ table {
   .store-footer-bottom { flex-direction: column; }
   .store-document { margin: 24px 14px 50px; padding: 26px 20px; }
 }
+
+
+/* Acceso contextual: visible únicamente para administradores autorizados. */
+.store-account-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.store-admin-return {
+  padding: 10px 15px;
+  border: 2px solid #174b7a;
+  border-radius: 999px;
+  background: #fff;
+  color: #174b7a;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.store-admin-return:hover {
+  border-color: #f3225a;
+  color: #f3225a;
+}
+
+@media (max-width: 560px) {
+  .store-account-actions {
+    gap: 7px;
+  }
+
+  .store-admin-return {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}
