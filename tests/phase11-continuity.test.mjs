@@ -22,6 +22,20 @@ const cancellationRepair = fs.readFileSync(
   new URL("../supabase/repair_phase11_cancel_order_function.sql", import.meta.url),
   "utf8"
 );
+const loginPage = fs.readFileSync(
+  new URL("../app/login/page.tsx", import.meta.url),
+  "utf8"
+);
+const storeFooter = fs.readFileSync(
+  new URL("../components/StoreFooter.tsx", import.meta.url),
+  "utf8"
+);
+
+test("keeps self-registration and admin access out of the public storefront", () => {
+  assert.doesNotMatch(loginPage, /auth\.signUp/i);
+  assert.doesNotMatch(loginPage, />\s*Crear cuenta\s*</i);
+  assert.doesNotMatch(storeFooter, /href=["']\/login["']/i);
+});
 
 test("audits the cancellation function used by the application", () => {
   assert.match(audit, /cancel_order_and_restore_inventory/i);
