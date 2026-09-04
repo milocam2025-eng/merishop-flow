@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import StoreFooter from "@/components/StoreFooter";
+import PwaInstaller from "@/components/PwaInstaller";
 import {
   addCartItem,
   cartItemCount,
@@ -327,6 +328,8 @@ const url =
         <div><span>🔒</span><strong>Proceso claro</strong><small>Precios y condiciones antes del pago</small></div>
         <div><span>📦</span><strong>Seguimiento</strong><small>Información sobre pedido y entrega</small></div>
       </section>
+
+      <PwaInstaller />
 
       <div
         id="productos"
