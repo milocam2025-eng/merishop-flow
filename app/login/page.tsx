@@ -14,6 +14,13 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get("unauthorized") === "1") {
+      setMessage("Esta cuenta no tiene autorización administrativa.");
+    }
+  }, []);
+
+  useEffect(() => {
     const supabase = createClient();
 
     const {
@@ -44,6 +51,15 @@ export default function LoginPage() {
 
     if (error) {
       setMessage(error.message);
+      return;
+    }
+
+    const { data: isAdmin, error: authorizationError } =
+      await supabase.rpc("is_admin");
+
+    if (authorizationError || isAdmin !== true) {
+      await supabase.auth.signOut();
+      setMessage("Esta cuenta no tiene autorización administrativa.");
       return;
     }
 
