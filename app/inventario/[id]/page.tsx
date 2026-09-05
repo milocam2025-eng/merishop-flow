@@ -16,6 +16,7 @@ import AuthGuard from "@/components/AuthGuard";
 import CameraPicker from "@/components/CameraPicker";
 import { validateInventory } from "@/lib/inventory-validation";
 import { createClient } from "@/lib/supabase/client";
+import { prepareProductImage } from "@/lib/product-image";
 
 
 type Product = {
@@ -254,13 +255,6 @@ const [dragOverImageId, setDragOverImageId] =
     return;
   }
 
-  if (file.size > 10 * 1024 * 1024) {
-    setMessage(
-      "La fotografía no puede superar 10 MB."
-    );
-    return;
-  }
-
   if (uploading) return;
 
   setUploading(true);
@@ -286,8 +280,17 @@ const [dragOverImageId, setDragOverImageId] =
     return;
   }
 
+  let uploadFile: File;
+  try {
+    uploadFile = await prepareProductImage(file);
+  } catch (error) {
+    setUploading(false);
+    setMessage(error instanceof Error ? error.message : "No se pudo preparar la fotografía.");
+    return;
+  }
+
   const extension =
-    file.name
+    uploadFile.name
       .split(".")
       .pop()
       ?.toLowerCase() || "jpg";
@@ -301,7 +304,7 @@ const [dragOverImageId, setDragOverImageId] =
       .from("product-images")
       .upload(
         filePath,
-        file,
+        uploadFile,
         {
           cacheControl: "3600",
           upsert: false,
@@ -415,13 +418,6 @@ const [dragOverImageId, setDragOverImageId] =
     return;
   }
 
-  if (file.size > 10 * 1024 * 1024) {
-    setMessage(
-      "La fotografía no puede superar 10 MB."
-    );
-    return;
-  }
-
   if (uploadingGallery) return;
 
   const totalPhotos =
@@ -457,8 +453,17 @@ const [dragOverImageId, setDragOverImageId] =
     return;
   }
 
+  let uploadFile: File;
+  try {
+    uploadFile = await prepareProductImage(file);
+  } catch (error) {
+    setUploadingGallery(false);
+    setMessage(error instanceof Error ? error.message : "No se pudo preparar la fotografía.");
+    return;
+  }
+
   const extension =
-    file.name
+    uploadFile.name
       .split(".")
       .pop()
       ?.toLowerCase() || "jpg";
@@ -472,7 +477,7 @@ const [dragOverImageId, setDragOverImageId] =
       .from("product-images")
       .upload(
         filePath,
-        file,
+        uploadFile,
         {
           cacheControl: "3600",
           upsert: false,
