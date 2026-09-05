@@ -91,6 +91,20 @@ const defaultCategories = [
 
 const money = formatMXN;
 const moneyUSD = formatUSD;
+const MAX_PRODUCT_IMAGES = 5;
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+
+function imageFileError(file: File) {
+  if (!file.type.startsWith("image/")) {
+    return `${file.name} no es una imagen válida.`;
+  }
+
+  if (file.size > MAX_IMAGE_BYTES) {
+    return `${file.name} supera el límite de 10 MB.`;
+  }
+
+  return "";
+}
 
 export default function InventarioPage() {
 const [rows, setRows] = useState<InventoryRow[]>([]);
@@ -105,6 +119,48 @@ const [savedCategories, setSavedCategories] =
 const [selectedImages, setSelectedImages] = useState<File[]>([]);
 const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 const [primaryImageIndex, setPrimaryImageIndex] = useState(0);
+
+function addSelectedImages(files: File[]) {
+  const invalid = files.map(imageFileError).find(Boolean);
+  if (invalid) {
+    setMessage(invalid);
+    return;
+  }
+
+  const uniqueFiles = [...selectedImages];
+  for (const file of files) {
+    const duplicate = uniqueFiles.some(
+      (current) =>
+        current.name === file.name &&
+        current.size === file.size &&
+        current.lastModified === file.lastModified
+    );
+
+    if (!duplicate) uniqueFiles.push(file);
+  }
+
+  if (uniqueFiles.length > MAX_PRODUCT_IMAGES) {
+    setMessage("Puedes cargar un máximo de 5 fotografías por producto.");
+    return;
+  }
+
+  setSelectedImages(uniqueFiles);
+  setImagePreviews(uniqueFiles.map((file) => URL.createObjectURL(file)));
+  setMessage(
+    `${uniqueFiles.length} ${uniqueFiles.length === 1 ? "fotografía seleccionada" : "fotografías seleccionadas"}.`
+  );
+}
+
+function removeSelectedImage(index: number) {
+  const nextFiles = selectedImages.filter((_, current) => current !== index);
+  setSelectedImages(nextFiles);
+  setImagePreviews(nextFiles.map((file) => URL.createObjectURL(file)));
+  setPrimaryImageIndex((current) => {
+    if (nextFiles.length === 0) return 0;
+    if (current === index) return 0;
+    return current > index ? current - 1 : current;
+  });
+}
 
 useEffect(() => {
   const savedCategoriesJson =
@@ -397,6 +453,10 @@ if (selectedImages.length > 0) {
     index++
   ) {
     const file = selectedImages[index];
+
+    setMessage(
+      `Subiendo fotografía ${index + 1} de ${selectedImages.length}...`
+    );
 
     const extension =
       file.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -1071,6 +1131,10 @@ style={{
             </div>
 <h2 style={{ marginTop: 30 }}>Fotografías</h2>
 
+<p style={{ color: "#52647a", marginBottom: 14 }}>
+  Agrega de 3 a 5 fotografías. Puedes elegir varias a la vez o agregarlas en diferentes selecciones.
+</p>
+
 <label style={{ display: "block", marginBottom: 20 }}>
   Seleccionar fotografías
 
@@ -1080,16 +1144,8 @@ style={{
     multiple
     onChange={(e) => {
       const files = Array.from(e.target.files ?? []);
-
-      setSelectedImages(files);
-
-      setImagePreviews(
-        files.map((file) =>
-          URL.createObjectURL(file)
-        )
-      );
-
-      setPrimaryImageIndex(0);
+      addSelectedImages(files);
+      e.target.value = "";
     }}
   />
 </label>
@@ -1140,6 +1196,18 @@ style={{
           {index === primaryImageIndex
             ? "✓ Foto principal"
             : "Elegir principal"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => removeSelectedImage(index)}
+          style={{
+            width: "100%",
+            marginTop: 8,
+            color: "#b91c1c",
+          }}
+        >
+          Quitar fotografía
         </button>
       </div>
     ))}
