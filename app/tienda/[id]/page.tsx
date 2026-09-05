@@ -49,6 +49,10 @@ const [images, setImages] =
 const [selectedImage, setSelectedImage] =
   useState("");
 
+  const [lightboxOpen, setLightboxOpen] =
+    useState(false);
+  const [zoom, setZoom] = useState(1);
+
   const [loading, setLoading] =
     useState(true);
 
@@ -132,6 +136,18 @@ const [selectedImage, setSelectedImage] =
   }
 }, [id]);
 
+  useEffect(() => {
+    function closeWithEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setLightboxOpen(false);
+        setZoom(1);
+      }
+    }
+
+    window.addEventListener("keydown", closeWithEscape);
+    return () => window.removeEventListener("keydown", closeWithEscape);
+  }, []);
+
   function buyWhatsApp() {
   if (!product) return;
 
@@ -211,6 +227,21 @@ function addToCart() {
     `${product.product} fue agregado al carrito.`
   );
 }
+
+  const galleryUrls = images.length > 0
+    ? images.map((image) => image.image_url)
+    : selectedImage
+      ? [selectedImage]
+      : [];
+
+  function moveLightbox(direction: -1 | 1) {
+    if (galleryUrls.length < 2) return;
+    const currentIndex = Math.max(0, galleryUrls.indexOf(selectedImage));
+    const nextIndex =
+      (currentIndex + direction + galleryUrls.length) % galleryUrls.length;
+    setSelectedImage(galleryUrls[nextIndex]);
+    setZoom(1);
+  }
   if (loading) {
     return (
       <main style={styles.center}>
@@ -259,12 +290,24 @@ function addToCart() {
            
 {selectedImage ? (
   <>
-   <img
-  className="product-main-image"
-  src={selectedImage}
-  alt={product.product}
-  style={styles.image}
-/>
+   <button
+     type="button"
+     className="product-zoom-trigger"
+     style={styles.zoomTrigger}
+     onClick={() => {
+       setZoom(1);
+       setLightboxOpen(true);
+     }}
+     aria-label={`Ampliar fotografía de ${product.product}`}
+   >
+     <img
+       className="product-main-image"
+       src={selectedImage}
+       alt={product.product}
+       style={styles.image}
+     />
+     <span style={styles.zoomHint}>🔍 Toca para ampliar</span>
+   </button>
     {images.length > 1 && (
       <div
         style={{
@@ -513,7 +556,129 @@ function addToCart() {
         </div>
       </div>
 
+      {lightboxOpen && selectedImage && (
+        <div
+          className="product-lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Vista ampliada de ${product.product}`}
+          onClick={() => {
+            setLightboxOpen(false);
+            setZoom(1);
+          }}
+        >
+          <div className="product-lightbox-panel" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              className="product-lightbox-close"
+              onClick={() => {
+                setLightboxOpen(false);
+                setZoom(1);
+              }}
+              aria-label="Cerrar imagen ampliada"
+            >
+              ✕
+            </button>
+
+            <div className="product-lightbox-image-area">
+              <img
+                src={selectedImage}
+                alt={product.product}
+                style={{ transform: `scale(${zoom})` }}
+              />
+            </div>
+
+            <div className="product-lightbox-controls">
+              {galleryUrls.length > 1 && (
+                <button type="button" onClick={() => moveLightbox(-1)}>
+                  ← Anterior
+                </button>
+              )}
+              <button type="button" onClick={() => setZoom((value) => Math.max(1, value - 0.5))}>
+                − Alejar
+              </button>
+              <span>{Math.round(zoom * 100)}%</span>
+              <button type="button" onClick={() => setZoom((value) => Math.min(3, value + 0.5))}>
+                + Acercar
+              </button>
+              {galleryUrls.length > 1 && (
+                <button type="button" onClick={() => moveLightbox(1)}>
+                  Siguiente →
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
+        .product-lightbox {
+          position: fixed;
+          inset: 0;
+          z-index: 10000;
+          display: grid;
+          place-items: center;
+          padding: 20px;
+          background: rgba(3, 15, 29, .92);
+        }
+
+        .product-lightbox-panel {
+          width: min(100%, 1050px);
+          position: relative;
+        }
+
+        .product-lightbox-image-area {
+          height: min(72vh, 760px);
+          display: grid;
+          place-items: center;
+          overflow: auto;
+          border-radius: 18px;
+          background: #fff;
+        }
+
+        .product-lightbox-image-area img {
+          max-width: 92%;
+          max-height: 92%;
+          object-fit: contain;
+          transition: transform .18s ease;
+        }
+
+        .product-lightbox-close {
+          position: absolute;
+          z-index: 2;
+          top: 12px;
+          right: 12px;
+          width: 46px;
+          height: 46px;
+          border: 0;
+          border-radius: 50%;
+          background: #0d2b4b;
+          color: #fff;
+          font-size: 22px;
+          cursor: pointer;
+        }
+
+        .product-lightbox-controls {
+          margin-top: 14px;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          align-items: center;
+          gap: 9px;
+          color: #fff;
+        }
+
+        .product-lightbox-controls button {
+          min-height: 42px;
+          padding: 0 15px;
+          border: 1px solid rgba(255,255,255,.45);
+          border-radius: 999px;
+          background: #fff;
+          color: #0d2b4b;
+          font-weight: 800;
+          cursor: pointer;
+        }
+
         @media (max-width: 768px) {
           .product-card {
             grid-template-columns: 1fr !important;
@@ -528,6 +693,9 @@ function addToCart() {
             min-height: 0 !important;
             object-fit: contain !important;
           }
+
+          .product-lightbox-image-area { height: 66vh; }
+          .product-lightbox-controls button { padding: 0 11px; font-size: 13px; }
         }
 
         @media (max-width: 480px) {
@@ -595,6 +763,27 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     color: "#718096",
+  },
+
+  zoomTrigger: {
+    width: "100%",
+    padding: 0,
+    position: "relative",
+    border: 0,
+    background: "transparent",
+    cursor: "zoom-in",
+  },
+
+  zoomHint: {
+    position: "absolute",
+    right: 14,
+    bottom: 14,
+    padding: "8px 12px",
+    borderRadius: 999,
+    background: "rgba(13,43,75,.9)",
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: 800,
   },
 
   info: {
