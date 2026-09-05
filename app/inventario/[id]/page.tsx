@@ -254,9 +254,9 @@ const [dragOverImageId, setDragOverImageId] =
     return;
   }
 
-  if (file.size > 5 * 1024 * 1024) {
+  if (file.size > 10 * 1024 * 1024) {
     setMessage(
-      "La fotografía no puede superar 5 MB."
+      "La fotografía no puede superar 10 MB."
     );
     return;
   }
@@ -415,9 +415,9 @@ const [dragOverImageId, setDragOverImageId] =
     return;
   }
 
-  if (file.size > 5 * 1024 * 1024) {
+  if (file.size > 10 * 1024 * 1024) {
     setMessage(
-      "La fotografía no puede superar 5 MB."
+      "La fotografía no puede superar 10 MB."
     );
     return;
   }
@@ -427,9 +427,9 @@ const [dragOverImageId, setDragOverImageId] =
   const totalPhotos =
     images.length;
 
-  if (totalPhotos >= 10) {
+  if (totalPhotos >= 5) {
     setMessage(
-      "Este producto ya tiene el máximo de 10 fotografías."
+      "Este producto ya tiene el máximo de 5 fotografías."
     );
     return;
   }
@@ -1506,7 +1506,7 @@ total_cost_mxn:
                 </h2>
 
                 <p>
-                  {totalPhotos} de 10 fotografías
+                  {totalPhotos} de 5 fotografías
                 </p>
               </div>
             </div>
@@ -1575,12 +1575,9 @@ total_cost_mxn:
   }}
 >
 <CameraPicker
-  onFileSelected={async (file) => {
+  onFileSelected={(file) => {
     if (!file) return;
-
     setImageFile(file);
-
-    await uploadMainImage(file);
   }}
 />
 {imageFile && (
@@ -1916,7 +1913,7 @@ onClick={() =>
   </div>
 )}
               {totalPhotos <
-                10 && (
+                5 && (
                 <div
                   style={{
                     marginTop: 25,
@@ -1926,12 +1923,9 @@ onClick={() =>
                     Agregar otra fotografía
                   </h3>
 <CameraPicker
-  onFileSelected={async (file) => {
+  onFileSelected={(file) => {
     if (!file) return;
-
     setGalleryFile(file);
-
-    await uploadGalleryImage(file);
   }}
 />
 
