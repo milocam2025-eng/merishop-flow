@@ -9,6 +9,7 @@ import HeaderMetrics from "@/components/HeaderMetrics";
 import { formatMXN, formatUSD, numberValue } from "@/lib/formatters";
 import { validateInventory } from "@/lib/inventory-validation";
 import { createClient } from "@/lib/supabase/client";
+import { prepareProductImage } from "@/lib/product-image";
 
 type InventoryRow = {
   id: string;
@@ -92,15 +93,14 @@ const defaultCategories = [
 const money = formatMXN;
 const moneyUSD = formatUSD;
 const MAX_PRODUCT_IMAGES = 5;
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 function imageFileError(file: File) {
   if (!file.type.startsWith("image/")) {
     return `${file.name} no es una imagen válida.`;
   }
 
-  if (file.size > MAX_IMAGE_BYTES) {
-    return `${file.name} supera el límite de 10 MB.`;
+  if (file.size > 40 * 1024 * 1024) {
+    return `${file.name} supera el límite de 40 MB.`;
   }
 
   return "";
@@ -452,14 +452,22 @@ if (selectedImages.length > 0) {
     index < selectedImages.length;
     index++
   ) {
-    const file = selectedImages[index];
+    const originalFile = selectedImages[index];
 
     setMessage(
       `Subiendo fotografía ${index + 1} de ${selectedImages.length}...`
     );
 
-    const extension =
-      file.name.split(".").pop()?.toLowerCase() || "jpg";
+    let file: File;
+    try {
+      file = await prepareProductImage(originalFile);
+    } catch (error) {
+      setSaving(false);
+      setMessage(error instanceof Error ? error.message : "No se pudo preparar la fotografía.");
+      return;
+    }
+
+    const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
 
     const storagePath =
       `${user.id}/${inventoryId}/${Date.now()}-${index}.${extension}`;
